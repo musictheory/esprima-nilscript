@@ -415,14 +415,16 @@ export class FunctionDeclaration {
     readonly params: FunctionParameter[];
     readonly body: BlockStatement;
     readonly generator: boolean;
+    readonly annotation: OJTypeAnnotation | null; //!oj: Add annotation
     readonly expression: boolean;
     readonly async: boolean;
-    constructor(id: Identifier | null, params: FunctionParameter[], body: BlockStatement, generator: boolean) {
+    constructor(id: Identifier | null, params: FunctionParameter[], body: BlockStatement, generator: boolean, annotation: OJTypeAnnotation | null) { //!oj: Add annotation
         this.type = Syntax.FunctionDeclaration;
         this.id = id;
         this.params = params;
         this.body = body;
         this.generator = generator;
+        this.annotation = annotation; //!oj: Add annotation
         this.expression = false;
         this.async = false;
     }
@@ -434,14 +436,16 @@ export class FunctionExpression {
     readonly params: FunctionParameter[];
     readonly body: BlockStatement;
     readonly generator: boolean;
+    readonly annotation: OJTypeAnnotation | null; //!oj: Add annotation
     readonly expression: boolean;
     readonly async: boolean;
-    constructor(id: Identifier | null, params: FunctionParameter[], body: BlockStatement, generator: boolean) {
+    constructor(id: Identifier | null, params: FunctionParameter[], body: BlockStatement, generator: boolean, annotation: OJTypeAnnotation | null) { //!oj: Add annotation
         this.type = Syntax.FunctionExpression;
         this.id = id;
         this.params = params;
         this.body = body;
         this.generator = generator;
+        this.annotation = annotation; //!oj: Add annotation
         this.expression = false;
         this.async = false;
     }
@@ -450,9 +454,11 @@ export class FunctionExpression {
 export class Identifier {
     readonly type: string;
     readonly name: string;
+    readonly annotation: OJTypeAnnotation | null; //!oj: Add annotation
     constructor(name) {
         this.type = Syntax.Identifier;
         this.name = name;
+        this.annotation = null; //!oj: optimization
     }
 }
 
@@ -874,3 +880,392 @@ export class YieldExpression {
         this.delegate = delegate;
     }
 }
+
+//!oj: begin changes
+export class OJMessageExpression {
+    readonly type: string;
+    readonly receiver: OJMessageReceiver;
+    readonly selectorName: string;
+    readonly messageSelectors: OJMessageSelector[];
+    constructor(receiver: OJMessageReceiver, selectorName: string, messageSelectors: OJMessageSelector[]) {
+        this.type = Syntax.OJMessageExpression;
+        this.receiver = receiver;
+        this.selectorName = selectorName;
+        this.messageSelectors = messageSelectors;
+    }
+}
+
+export class OJMessageReceiver {
+    readonly type: string;
+    readonly value;
+    constructor(value) {
+        this.type = Syntax.OJMessageReceiver;
+        this.value = value;
+    }
+}
+
+export class OJMessageSelector {
+    readonly type: string;
+    readonly name: OJMethodNameSegment;
+    readonly argument: Expression | null;
+    readonly arguments: Expression[] | null;
+    constructor(name: OJMethodNameSegment, arg: Expression | null, args: Expression[] | null) {
+        this.type = Syntax.OJMessageSelector;
+        this.name = name;
+        this.argument = arg;
+        this.arguments = args;
+    }
+}
+
+export class OJMethodNameSegment {
+    readonly type: string;
+    readonly value;
+    constructor(value) {
+        this.type = Syntax.OJMethodNameSegment;
+        this.value = value;
+    }
+}
+
+export class OJClassImplementation {
+    readonly type: string;
+    readonly id: Identifier;
+    readonly body: BlockStatement;
+    readonly superClass: Identifier | null;
+    readonly category: Identifier | null;
+    readonly extension: boolean;
+    readonly protocolList: OJProtocolList | null;
+    readonly ivarDeclarations: OJInstanceVariableDeclarations | null;
+    constructor(id: Identifier, superClass: Identifier | null, category: Identifier | null, extension: boolean, protocolList:  OJProtocolList | null, ivarDeclarations: OJInstanceVariableDeclarations | null, body: BlockStatement) {
+        this.type = Syntax.OJClassImplementation;
+        this.id   = id;
+        this.body = body;
+        this.superClass = superClass;
+        this.category = category;
+        this.extension = extension;
+        this.protocolList = protocolList;
+        this.ivarDeclarations = ivarDeclarations;
+    }
+}
+
+
+export class OJMethodDefinition {
+    readonly type: string;
+    readonly selectorType: string;
+    readonly selectorName: string;
+    readonly returnType: OJParameterType | null;
+    readonly methodSelectors: OJMethodSelector[];
+    readonly body: BlockStatement;
+    constructor(selectorType: string, selectorName: string, returnType: OJParameterType | null, methodSelectors: OJMethodSelector[], body: BlockStatement) {
+        this.type = Syntax.OJMethodDefinition;
+        this.selectorType = selectorType;
+        this.selectorName = selectorName;
+        this.returnType = returnType;
+        this.methodSelectors = methodSelectors;
+        this.body = body;
+    }
+}
+
+export class OJMethodSelector {
+    readonly type: string;
+    readonly name: OJMethodNameSegment;
+    readonly methodType: OJParameterType | null;
+    readonly variableName : Identifier | null;
+    constructor (name: OJMethodNameSegment, methodType: OJParameterType | null, variableName: Identifier | null) {
+        this.type = Syntax.OJMethodSelector;
+        this.name = name;
+        this.methodType = methodType;
+        this.variableName = variableName;
+    }
+}
+
+export class OJSelector {
+    readonly type: string;
+    readonly selectorName: string;
+    constructor (name: string) {
+        this.type = Syntax.OJSelector;
+        this.selectorName = name;
+    }
+}
+
+export class OJParameterType {
+    readonly type: string;
+    readonly value: string;
+    constructor (value: string) {
+        this.type = Syntax.OJParameterType;
+        this.value = value;
+    }
+}
+
+export class OJInstanceVariableDeclarations {
+    readonly type: string;
+    readonly declarations: OJInstanceVariableDeclaration[];
+    constructor (declarations: OJInstanceVariableDeclaration[]) {
+        this.type = Syntax.OJInstanceVariableDeclarations;
+        this.declarations = declarations;
+    }
+}
+
+export class OJInstanceVariableDeclaration {
+    readonly type: string;
+    readonly parameterType: OJParameterType;
+    readonly ivars: Identifier[];
+    constructor (parameterType: OJParameterType, ivars: Identifier[]) {
+        this.type = Syntax.OJInstanceVariableDeclaration;
+        this.parameterType = parameterType;
+        this.ivars = ivars;
+    }
+}
+
+export class OJPropertyDirective {
+    readonly type: string;
+    readonly id: OJIdentifierWithAnnotation;
+    readonly attributes: OJPropertyAttribute[];
+    constructor(id: OJIdentifierWithAnnotation, attributes: OJPropertyAttribute[]) {
+        this.type = Syntax.OJPropertyDirective;
+        this.id = id;
+        this.attributes = attributes;
+    }
+}
+
+export class OJPropertyAttribute {
+    readonly type: string;
+    readonly name: string;
+    readonly selector: OJSelector | null;
+    constructor(name: string, selector: OJSelector | null) {
+        this.type = Syntax.OJPropertyAttribute;
+        this.name = name;
+        this.selector = selector;
+    }
+}
+
+export class OJObserveDirective {
+    readonly type: string;
+    readonly ids: Identifier[];
+    readonly attributes: OJObserveAttribute[];
+    constructor (ids: Identifier[], attributes: OJObserveAttribute[]) {
+        this.type = Syntax.OJObserveDirective;
+        this.ids = ids;
+        this.attributes = attributes;
+    }
+}
+
+export class OJObserveAttribute {
+    readonly type: string;
+    readonly name: string;
+    readonly selector: OJSelector | null;
+    constructor (name: string, selector: OJSelector | null) {
+        this.type = Syntax.OJObserveAttribute;
+        this.name = name;
+        this.selector = selector;
+    }
+}
+
+export class OJSynthesizeDirective {
+    readonly type: string;
+    readonly pairs: OJSynthesizePair[];
+    constructor (pairs: OJSynthesizePair[]) {
+        this.type = Syntax.OJSynthesizeDirective;
+        this.pairs = pairs;
+    }
+}
+
+export class OJForwardDirective {
+    readonly type: string;
+    readonly kind: string;
+    readonly ids: Identifier[];
+    constructor (kind: string, ids: Identifier[]) {
+        this.type = Syntax.OJForwardDirective;
+        this.kind = kind;
+        this.ids = ids;
+    }
+}
+
+export class OJSqueezeDirective {
+    readonly type: string;
+    readonly ids: Identifier[];
+    constructor (ids: Identifier[]) {
+        this.type = Syntax.OJSqueezeDirective;
+        this.ids = ids;
+    }
+}
+
+export class OJSynthesizePair {
+    readonly type: string;
+    readonly id: Identifier;
+    readonly backing: Identifier | null;
+    constructor (id: Identifier, backing: Identifier | null) {
+        this.type = Syntax.OJSynthesizePair;
+        this.id = id;
+        this.backing = backing;
+    }
+}
+
+export class OJDynamicDirective {
+    readonly type: string;
+    readonly ids: Identifier[];
+    constructor (ids: Identifier[]) {
+        this.type = Syntax.OJDynamicDirective;
+        this.ids = ids;
+    }
+}
+
+export class OJSelectorDirective {
+    readonly type: string;
+    readonly name: string;
+    constructor (name: string) {
+        this.type = Syntax.OJSelectorDirective;
+        this.name = name;
+    }
+}
+
+export class OJConstDeclaration {
+    readonly type: string;
+    readonly declarations: VariableDeclarator[];
+    constructor (declarations: VariableDeclarator[]) {
+        this.type = Syntax.OJConstDeclaration;
+        this.declarations = declarations;
+    }
+}
+
+export class OJEnumDeclaration {
+    readonly type: string;
+    readonly id: Identifier | null;
+    readonly declarations: VariableDeclarator[];
+    constructor (id: Identifier | null, declarations: VariableDeclarator[]) {
+        this.type = Syntax.OJEnumDeclaration;
+        this.id = id;
+        this.declarations = declarations;
+    }
+}
+
+export class OJProtocolList {
+    readonly type: string;
+    readonly protocols: Identifier[];
+    constructor (protocols: Identifier[]) {
+        this.type = Syntax.OJProtocolList;
+        this.protocols = protocols;
+    }
+}
+
+export class OJProtocolDefinition {
+    readonly type: string;
+    readonly id: Identifier;
+    readonly protocolList: OJProtocolList | null;
+    readonly body: BlockStatement;
+    constructor (id: Identifier, protocolList: OJProtocolList | null, body: BlockStatement) {
+        this.type = Syntax.OJProtocolDefinition;
+        this.id = id;
+        this.protocolList = protocolList;
+        this.body = body;
+    }
+}
+
+export class OJMethodDeclaration {
+    readonly type: string;
+    readonly selectorType: string;
+    readonly selectorName: string;
+    readonly returnType: OJParameterType | null;
+    readonly methodSelectors: OJMethodSelector[];
+    readonly optional: boolean;
+    constructor (selectorType: string, selectorName: string, returnType: OJParameterType | null, methodSelectors: OJMethodSelector[]) {
+        this.type = Syntax.OJMethodDeclaration;
+        this.selectorType = selectorType;
+        this.selectorName = selectorName;
+        this.returnType = returnType;
+        this.methodSelectors = methodSelectors;
+        this.optional = false;
+    }
+}
+
+export class OJCastExpression {
+    readonly type: string;
+    readonly id: string;
+    readonly argument: Expression;
+    constructor (id: string, argument: Expression) {
+        this.type = Syntax.OJCastExpression;
+        this.id = id;
+        this.argument = argument;
+    }
+}
+
+export class OJAnyExpression {
+    readonly type: string;
+    readonly argument: Expression;
+    constructor (argument: Expression) {
+        this.type = Syntax.OJAnyExpression;
+        this.argument = argument;
+    }
+}
+
+export class OJTypeAnnotation {
+    readonly type: string;
+    readonly value: string;
+    readonly optional: boolean;
+    constructor (value: string, optional: boolean) {
+        this.type = Syntax.OJTypeAnnotation;
+        this.value = value;
+        this.optional = optional;
+    }
+}
+
+export class OJTypeDefinition {
+    readonly type: string;
+    readonly name: string;
+    readonly kind: string;
+    readonly params: OJIdentifierWithAnnotation[];
+    readonly annotation: OJTypeAnnotation | null;
+    constructor (name: string, kind: string, params: OJIdentifierWithAnnotation[], annotation: OJTypeAnnotation | null) {
+        this.type = Syntax.OJTypeDefinition;
+        this.name = name;
+        this.kind = kind;
+        this.params = params;
+        this.annotation = annotation;
+    }
+}
+
+export class OJEachStatement {
+    readonly type: string;
+    readonly left: VariableDeclaration | Identifier;
+    readonly right: Expression;
+    readonly body: Statement;
+    constructor (left: VariableDeclaration | Identifier, right: Expression, body: Statement) {
+        this.type = Syntax.OJEachStatement;
+        this.left = left;
+        this.right = right;
+        this.body = body;
+    }
+}
+
+export class OJGlobalDeclaration {
+    readonly type: string;
+    readonly declaration: FunctionDeclaration | null;
+    readonly declarators: VariableDeclarator[] | null;
+    constructor(declaration: FunctionDeclaration | null, declarators: VariableDeclarator[] | null) {
+        this.type = Syntax.OJGlobalDeclaration;
+        this.declaration = declaration;
+        this.declarators = declarators;
+    }
+}
+
+export class OJBridgedDeclaration {
+    readonly type: string;
+    readonly declaration: OJConstDeclaration | OJEnumDeclaration;
+    constructor (declaration: OJConstDeclaration | OJEnumDeclaration) {
+        this.type = Syntax.OJBridgedDeclaration;
+        this.declaration = declaration;
+    }
+}
+
+export class OJIdentifierWithAnnotation {
+    readonly type: string;
+    readonly name: string;
+    readonly annotation: OJTypeAnnotation;
+    constructor (name: string, annotation: OJTypeAnnotation) {
+        this.type = Syntax.Identifier;
+        this.name = name;
+        this.annotation = annotation;
+    }
+}
+
+//!oj: end changes
+

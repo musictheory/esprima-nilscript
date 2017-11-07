@@ -29,6 +29,7 @@ interface Context {
     inSwitch: boolean;
     labelSet: any;
     strict: boolean;
+    oj_inImplementation: boolean; //!oj: Add oj_inImplementation
 }
 
 export interface Marker {
@@ -147,7 +148,8 @@ export class Parser {
             inIteration: false,
             inSwitch: false,
             labelSet: {},
-            strict: false
+            strict: false,
+            oj_inImplementation: false //!oj: Add oj_inImplementation
         };
         this.tokens = [];
 
@@ -630,7 +632,7 @@ export class Parser {
                 this.context.isBindingElement = false;
                 token = this.nextToken();
                 raw = this.getTokenRaw(token);
-                expr = this.finalize(node, new Node.Literal(token.value === 'true', raw));
+                expr = this.finalize(node, new Node.Literal(token.value === 'true' || token.value === 'YES', raw)); //!oj: Adding YES
                 break;
 
             case Token.NullLiteral:
@@ -652,7 +654,7 @@ export class Parser {
                         expr = this.inheritCoverGrammar(this.parseGroupExpression);
                         break;
                     case '[':
-                        expr = this.inheritCoverGrammar(this.parseArrayInitializer);
+                        expr = this.inheritCoverGrammar(this.oj_parseArrayInitializerOrMessageExpression); //!oj: Allow message expressions
                         break;
                     case '{':
                         expr = this.inheritCoverGrammar(this.parseObjectInitializer);
@@ -684,6 +686,10 @@ export class Parser {
                     } else if (this.matchKeyword('this')) {
                         this.nextToken();
                         expr = this.finalize(node, new Node.ThisExpression());
+//!oj: start changes
+                    } else if (this.matchKeyword('@selector')) {
+                        expr = this.oj_parseSelectorDirective();
+//!oj: end changes
                     } else if (this.matchKeyword('class')) {
                         expr = this.parseClassExpression();
                     } else if (this.matchImportCall()) {
@@ -771,7 +777,7 @@ export class Parser {
         const method = this.parsePropertyMethod(params);
         this.context.allowYield = previousAllowYield;
 
-        return this.finalize(node, new Node.FunctionExpression(null, params.params, method, isGenerator));
+        return this.finalize(node, new Node.FunctionExpression(null, params.params, method, isGenerator, null)); //!oj: null for annotation
     }
 
     parsePropertyMethodAsyncFunction(): Node.FunctionExpression {
@@ -1437,6 +1443,12 @@ export class Parser {
             }
             this.context.isAssignmentTarget = false;
             this.context.isBindingElement = false;
+//!oj: start changes
+        } else if (this.matchKeyword('@cast')) {
+            expr = this.oj_parseCastExpression();
+        } else if (this.matchKeyword('@any')) {
+            expr = this.oj_parseAnyExpression();
+//!oj: end changes
         } else if (this.context.await && this.matchContextualKeyword('await')) {
             expr = this.parseAwaitExpression();
         } else {
@@ -1827,6 +1839,11 @@ export class Parser {
                 case 'function':
                     statement = this.parseFunctionDeclaration();
                     break;
+//!oj: start changes
+                case '@global':
+                    statement = this.oj_parseGlobalDeclaration();
+                    break;
+//!oj: end changes
                 case 'class':
                     statement = this.parseClassDeclaration();
                     break;
@@ -2043,7 +2060,7 @@ export class Parser {
                 this.tolerateUnexpectedToken(this.lookahead, Messages.LetInLexicalBinding);
             }
             params.push(this.lookahead);
-            pattern = this.parseVariableIdentifier(kind);
+            pattern = this.oj_parseVariableIdentifierWithOptionalTypeAnnotation(kind); //!oj: Allow type annotation
         }
 
         return pattern;
@@ -2743,6 +2760,39 @@ export class Parser {
                     case 'with':
                         statement = this.parseWithStatement();
                         break;
+//!oj: Start changes
+                    case '@class':
+                    case '@implementation':
+                        statement = this.oj_parseClassImplementationDefinition();
+                        break;
+                    case '@protocol':
+                        statement = this.oj_parseProtocolDefinition();
+                        break;
+                    case '@forward':
+                        statement = this.oj_parseForwardDirective();
+                        break;
+                    case '@squeeze':
+                        statement = this.oj_parseSqueezeDirective();
+                        break;
+                    case '@bridged':
+                        statement = this.oj_parseBridgedDeclaration();
+                        break;
+                    case '@const':
+                        statement = this.oj_parseConstDeclaration();
+                        break;
+                    case '@enum':
+                        statement = this.oj_parseEnumStatement();
+                        break;
+                    case '@each':
+                        statement = this.oj_parseEachStatement();
+                        break;
+                    case '@global':
+                        statement = this.oj_parseGlobalDeclaration();
+                        break;
+                    case '@type':
+                        statement = this.oj_parseTypeDefinition();
+                        break;
+//!oj: End changes
                     default:
                         statement = this.parseExpressionStatement();
                         break;
@@ -2946,6 +2996,8 @@ export class Parser {
             message = formalParameters.message;
         }
 
+        const annotation = this.match(':') ? this.oj_parseTypeAnnotation({ allowVoid: true }) : null; //!oj: Allow annotations
+
         const previousStrict = this.context.strict;
         const previousAllowStrictDirective = this.context.allowStrictDirective;
         this.context.allowStrictDirective = formalParameters.simple;
@@ -2963,7 +3015,7 @@ export class Parser {
         this.context.allowYield = previousAllowYield;
 
         return isAsync ? this.finalize(node, new Node.AsyncFunctionDeclaration(id, params, body)) :
-            this.finalize(node, new Node.FunctionDeclaration(id, params, body, isGenerator));
+            this.finalize(node, new Node.FunctionDeclaration(id, params, body, isGenerator, annotation)); //!oj: Allow annotations
     }
 
     parseFunctionExpression(): Node.AsyncFunctionExpression | Node.FunctionExpression {
@@ -3016,6 +3068,8 @@ export class Parser {
             message = formalParameters.message;
         }
 
+        const annotation = this.match(':') ? this.oj_parseTypeAnnotation({ allowVoid: true }) : null; //!oj: Allow annotations
+
         const previousStrict = this.context.strict;
         const previousAllowStrictDirective = this.context.allowStrictDirective;
         this.context.allowStrictDirective = formalParameters.simple;
@@ -3032,7 +3086,7 @@ export class Parser {
         this.context.allowYield = previousAllowYield;
 
         return isAsync ? this.finalize(node, new Node.AsyncFunctionExpression(id, params, body)) :
-            this.finalize(node, new Node.FunctionExpression(id, params, body, isGenerator));
+            this.finalize(node, new Node.FunctionExpression(id, params, body, isGenerator, annotation)); //!oj: Allow annotations
     }
 
     // https://tc39.github.io/ecma262/#sec-directive-prologues-and-the-use-strict-directive
@@ -3115,7 +3169,7 @@ export class Parser {
         const method = this.parsePropertyMethod(formalParameters);
         this.context.allowYield = previousAllowYield;
 
-        return this.finalize(node, new Node.FunctionExpression(null, formalParameters.params, method, isGenerator));
+        return this.finalize(node, new Node.FunctionExpression(null, formalParameters.params, method, isGenerator, null)); //!oj: null for annotation
     }
 
     parseSetterMethod(): Node.FunctionExpression {
@@ -3133,7 +3187,7 @@ export class Parser {
         const method = this.parsePropertyMethod(formalParameters);
         this.context.allowYield = previousAllowYield;
 
-        return this.finalize(node, new Node.FunctionExpression(null, formalParameters.params, method, isGenerator));
+        return this.finalize(node, new Node.FunctionExpression(null, formalParameters.params, method, isGenerator, null));  //!oj: null for annotation
     }
 
     parseGeneratorMethod(): Node.FunctionExpression {
@@ -3148,7 +3202,7 @@ export class Parser {
         const method = this.parsePropertyMethod(params);
         this.context.allowYield = previousAllowYield;
 
-        return this.finalize(node, new Node.FunctionExpression(null, params.params, method, isGenerator));
+        return this.finalize(node, new Node.FunctionExpression(null, params.params, method, isGenerator, null)); //!oj: null for annotation
     }
 
     // https://tc39.github.io/ecma262/#sec-generator-function-definitions
@@ -3640,5 +3694,1147 @@ export class Parser {
 
         return exportDeclaration;
     }
+
+//!oj: start changes
+
+    // OJ additions, based on Objective-C 2.0 Grammar for ANTLR
+    // http://www.antlr.org/grammar/1212699960054/ObjectiveC2ansi.g
+
+    oj_init() {
+        // exports.version += "-oj";
+    }
+
+    oj_parseMethodNameSegment(): Node.OJMethodNameSegment {
+        const node = this.createNode();
+
+        var token, value, keyword;
+
+        token = this.nextToken();
+
+        if (token.type == Token.Identifier) {
+            value = token.value;
+        } else if (token.type == Token.NullLiteral) {
+            value = "null";
+        } else if (token.type == Token.Keyword) {
+            value = token.value;
+            keyword = true;
+        } else if (token.type == Token.BooleanLiteral) {
+            value = token.value;
+        } else {
+            this.throwUnexpectedToken(token);
+        }
+
+        return this.finalize(node, new Node.OJMethodNameSegment(value));
+    }
+
+    oj_parseSelector(allowComma): Node.OJSelector {
+        const node = this.createNode();
+        let name = "";
+
+        while (!this.match(')') && (!allowComma || !this.match(','))) {
+            let id = this.parseVariableIdentifier();
+            name += id.name;
+
+            if (this.match(':')) {
+                name += ":";
+                this.expect(':');
+            }
+        }
+
+        return this.finalize(node, new Node.OJSelector(name));
+    }
+
+    oj_parseSelectorDirective(): Node.OJSelectorDirective {
+        const node = this.createNode();
+        let name = "";
+
+        this.expectKeyword("@selector");
+        this.expect("(");
+
+        while (!this.match(')')) {
+            let id = this.oj_parseMethodNameSegment();
+            name += id.value;
+
+            if (this.match(':')) {
+                name += ":";
+                this.expect(':');
+            }
+        }
+
+        this.expect(")");
+
+        return this.finalize(node, new Node.OJSelectorDirective(name));
+    }
+
+    oj_parsePropertyAttribute() {
+        const node = this.createNode();
+
+        const startToken = this.lookahead;
+        let name = this.parseVariableIdentifier().name;
+
+        let selector: Node.OJSelector | null = null;
+
+        // See ParseObjc.cpp in LLVM clang
+        const allowedNames = [
+            'assign',
+            'atomic',
+            'class',
+            'copy',
+            'nonatomic',
+            'nonnull',
+            'null_resettable',
+            'null_unspecified',
+            'nullable',
+            'readonly',
+            'readwrite',
+            'retain',
+            'strong',
+            'struct',
+            'unsafe_unretained',
+            'weak'
+        ];
+
+        if (name == 'getter' || name == 'setter') {
+            this.expect('=');
+            selector = this.oj_parseSelector(true);
+
+        } else if (allowedNames.indexOf(name) < 0) {
+            this.throwUnexpectedToken(startToken);
+        }
+
+        return this.finalize(node, new Node.OJPropertyAttribute(name, selector));
+    }
+
+    oj_parsePropertyDirective() {
+        const node = this.createNode();
+
+        const attributes: Node.OJPropertyAttribute[] = [ ];
+
+        this.expectKeyword('@property');
+
+        if (this.match('(')) {
+            this.expect('(');
+
+            attributes.push(this.oj_parsePropertyAttribute());
+
+            while (this.match(',')) {
+                this.expect(',');
+                attributes.push(this.oj_parsePropertyAttribute());
+            }
+
+            this.expect(')');
+        }
+
+        const annotation = new Node.OJTypeAnnotation(this.oj_parseType(null), false);
+
+        let name = this.parseVariableIdentifier().name;
+
+        const id = new Node.OJIdentifierWithAnnotation(name, annotation);
+
+        this.consumeSemicolon();
+
+        return this.finalize(node, new Node.OJPropertyDirective(id, attributes));
+    }
+
+    oj_parseObserveAttribute(): Node.OJObserveAttribute {
+        const node = this.createNode();
+
+        const startToken = this.lookahead;
+        let name = this.parseVariableIdentifier().name;
+
+        let selector: Node.OJSelector | null = null;
+
+        const allowedNames = [ 'change', 'set' ];
+
+        if (name == 'before' || name == 'after') {
+            this.expect('=');
+            selector = this.oj_parseSelector(true);
+
+        } else if (allowedNames.indexOf(name) < 0) {
+            this.throwUnexpectedToken(startToken);
+        }
+
+        return this.finalize(node, new Node.OJObserveAttribute(name, selector));
+    }
+
+    oj_parseObserveDirective(): Node.OJObserveDirective {
+        const node = this.createNode();
+        const attributes: Node.OJObserveAttribute[] = [];
+        const ids: Node.Identifier[] = [];
+
+        this.expectKeyword('@observe');
+
+        this.expect('(');
+
+        attributes.push(this.oj_parseObserveAttribute());
+
+        while (this.match(',')) {
+            this.expect(',');
+            attributes.push(this.oj_parseObserveAttribute());
+        }
+
+        this.expect(')');
+
+        ids.push(this.parseVariableIdentifier());
+
+        while (this.match(',')) {
+            this.expect(',');
+            ids.push(this.parseVariableIdentifier());
+        }
+
+        this.consumeSemicolon();
+
+        return this.finalize(node, new Node.OJObserveDirective(ids, attributes));
+    }
+
+    oj_parseSynthesizePair(): Node.OJSynthesizePair {
+        const node = this.createNode();
+
+        let id = this.parseVariableIdentifier();
+        let backing: Node.Identifier | null = null;
+
+        if (this.match('=')) {
+            this.expect('=');
+            backing = this.parseVariableIdentifier();
+        }
+
+        return this.finalize(node, new Node.OJSynthesizePair(id, backing));
+    }
+    
+    oj_parseSynthesizeDirective(): Node.OJSynthesizeDirective {
+        const node = this.createNode();
+        const pairs: Node.OJSynthesizePair[] = [];
+
+        this.expectKeyword('@synthesize');
+
+        pairs.push(this.oj_parseSynthesizePair());
+
+        while (this.match(',')) {
+            this.expect(',');
+            pairs.push(this.oj_parseSynthesizePair());
+        }
+
+        this.consumeSemicolon();
+
+        return this.finalize(node, new Node.OJSynthesizeDirective(pairs));
+    }
+
+    oj_parseDynamicDirective(): Node.OJDynamicDirective {
+        const node = this.createNode();
+        const ids: Node.Identifier[] = [];
+
+        this.expectKeyword('@dynamic');
+
+        ids.push(this.parseVariableIdentifier());
+
+        while (this.match(',')) {
+            this.expect(',');
+            ids.push(this.parseVariableIdentifier());
+        }
+
+        this.consumeSemicolon();
+
+        return this.finalize(node, new Node.OJDynamicDirective(ids));
+    }
+
+    // This should be called when lookahead is a '<' token.
+    oj_parseTypeAngleSuffix(): string {
+        const parser = this;
+        const parts: string[] = [];
+        let angles = 0;
+
+        function appendNameAngle() {
+            parts.push( parser.parseVariableIdentifier().name );
+
+            if (parser.match('<')) {
+                appendAngle();
+            }
+        }
+
+        function appendAngle() {
+            parser.nextToken();  // Consume '<'
+            parts.push('<');
+            angles++;
+
+            // It's possible a recursive call will handle a '>>' or '>>>' in the stream,
+            // so save angles...
+            var savedAngles = angles;
+
+            appendNameAngle();
+
+            while (angles > 0 && parser.match(',')) {
+                parser.nextToken();
+                parts.push(',');
+                appendNameAngle();
+            }
+
+            // ...and check savedAngles here.  If angles is lower, a '>>' or '>>>' already handled our '>'
+            if (angles >= savedAngles) {
+                if (angles >= 1 && parser.match('>')) {
+                    parser.expect('>');
+                    parts.push('>');
+                    angles -= 1;
+
+                } else if (angles >= 2 && parser.match('>>')) {
+                    parser.expect('>>');
+                    parts.push('>>');
+                    angles -= 2;
+
+                } else if (angles >= 3 && parser.match('>>>')) {
+                    parser.expect('>>>');
+                    parts.push('>>>');
+                    angles -= 3;
+
+                } else {
+                    parser.throwUnexpectedToken(parser.lookahead);
+                }
+            }
+        }
+
+        if (!this.match('<')) return "";
+        appendAngle();
+
+        return parts.join("");
+    }
+
+    oj_parseType(options): string {
+        let name = "";
+
+        if (options && options.allowVoid && this.matchKeyword("void")) {
+            this.nextToken();
+            name = "void";
+        } else {
+            name = this.parseVariableIdentifier().name;
+        }
+
+        if (this.match('<')) {
+            name += this.oj_parseTypeAngleSuffix();
+        }
+
+        return name;
+    }
+
+    oj_parseParameterType(): Node.OJParameterType {
+        const node = this.createNode();
+        return this.finalize(node, new Node.OJParameterType(this.oj_parseType(null)));
+    }
+
+    oj_parseParameterTypeOrKeyword(keyword): Node.OJParameterType {
+        const node = this.createNode();
+
+        if (this.matchKeyword(keyword)) {
+            this.nextToken();
+            return this.finalize(node, new Node.OJParameterType(keyword));
+
+        } else {
+            return this.finalize(node, new Node.OJParameterType(this.oj_parseType(null)));
+        }
+    }
+
+    oj_parseMethodSelector(): Node.OJMethodSelector {
+        const node = this.createNode();
+
+        let methodType: Node.OJParameterType | null = null;
+        let variableName: Node.Identifier | null = null;
+
+        let name = this.oj_parseMethodNameSegment();
+
+        if (!this.match('{') && !this.match(';')) {
+            this.expect(':');
+
+            if (this.match('(')) {
+                this.expect('(');
+                methodType = this.oj_parseParameterType();
+                this.expect(')');
+            }
+
+            variableName = this.parseVariableIdentifier();
+        }
+
+        return this.finalize(node, new Node.OJMethodSelector(name, methodType, variableName));
+    }
+
+    oj_parseMethodDefinition(): Node.OJMethodDefinition {
+        const node = this.createNode();
+        const methodSelectors: Node.OJMethodSelector[] = []; 
+
+        let returnType: Node.OJParameterType | null = null;
+        let selectorName = '';
+
+        let type = this.match('+') ? '+' : '-';
+        this.expect(type);
+
+        if (this.match('(')) {
+            this.expect('(');
+            returnType = this.oj_parseParameterTypeOrKeyword('void');
+            this.expect(')');
+        }
+
+        while (!this.match('{')) {
+            let methodSelector = this.oj_parseMethodSelector();
+
+            selectorName += methodSelector.name.value;
+            if (methodSelector.variableName) {
+                selectorName += ":";
+            }
+
+            methodSelectors.push(methodSelector);
+        }
+
+        if (!selectorName) {
+            this.throwUnexpectedToken(this.lookahead);
+        }
+
+        const previousStrict = this.context.strict;
+        const body = this.parseFunctionSourceElements();
+        this.context.strict = previousStrict;
+
+        return this.finalize(node, new Node.OJMethodDefinition(type, selectorName, returnType, methodSelectors, body));
+    }
+
+    oj_parseMethodDeclaration(): Node.OJMethodDeclaration {
+        const node = this.createNode();
+        const methodSelectors: Node.OJMethodSelector[] = []; 
+
+        let returnType: Node.OJParameterType | null = null;
+        let selectorName = '';
+
+        let type = this.match('+') ? '+' : '-';
+        this.expect(type);
+
+        if (this.match('(')) {
+            this.expect('(');
+            returnType = this.oj_parseParameterTypeOrKeyword('void');
+            this.expect(')');
+        }
+
+        while (!this.match(";")) {
+            let methodSelector = this.oj_parseMethodSelector();
+
+            selectorName += methodSelector.name.value;
+            if (methodSelector.variableName) {
+                selectorName += ":";
+            }
+
+            methodSelectors.push(methodSelector);
+        }
+
+        if (!selectorName) {
+            this.throwUnexpectedToken(this.lookahead);
+        }
+
+        if (this.match(';')) {
+            this.expect(";");
+        }
+
+        return this.finalize(node, new Node.OJMethodDeclaration(type, selectorName, returnType, methodSelectors));
+    }    
+
+    oj_parseClassImplementationBody(): Node.BlockStatement {
+        const node = this.createNode();
+        const sourceElements: Node.Statement[] = [];
+
+        var sourceElement, directive, firstRestricted,
+            oldLabelSet, oldInIteration, oldInSwitch, oldInFunctionBody;
+
+        while (true) {
+            const token = this.lookahead;
+
+            if (this.matchKeyword('@end')) {
+                break; 
+
+            } else if (token.type === Token.Keyword) {
+                switch (token.value) {
+                case '@property':
+                    sourceElement = this.oj_parsePropertyDirective();
+                    break;
+                case '@observe':
+                    sourceElement = this.oj_parseObserveDirective();
+                    break;
+                case '@synthesize':
+                    sourceElement = this.oj_parseSynthesizeDirective();
+                    break;
+                case '@dynamic':
+                    sourceElement = this.oj_parseDynamicDirective();
+                    break;
+                default:
+                    sourceElement = this.parseStatementListItem();
+                    break;
+                }
+
+            } else if (this.match('-') || this.match('+')) {
+                sourceElement = this.oj_parseMethodDefinition();
+            } else {
+                sourceElement = this.parseStatementListItem();
+            }
+
+            if (typeof sourceElement === 'undefined') {
+                break;
+            }
+
+            sourceElements.push(sourceElement);
+        }
+
+        return this.finalize(node, new Node.BlockStatement(sourceElements));
+    }
+
+    oj_parseInstanceVariableDeclaration(): Node.OJInstanceVariableDeclaration {
+        const node = this.createNode();
+        const ivars: Node.Identifier[] = [];
+
+        const parameterType = new Node.OJParameterType(this.oj_parseType(null));
+
+        ivars.push(this.parseVariableIdentifier());
+
+        while (this.match(',')) {
+            this.expect(',');
+            ivars.push(this.parseVariableIdentifier());
+        }
+
+        return this.finalize(node, new Node.OJInstanceVariableDeclaration(parameterType, ivars));
+    }
+
+    oj_parseInstanceVariableDeclarations(): Node.OJInstanceVariableDeclarations {
+        const node = this.createNode();
+        const declarations: Node.OJInstanceVariableDeclaration[] = [];
+
+        this.expect('{');
+
+        while (!this.match('}')) {
+            declarations.push(this.oj_parseInstanceVariableDeclaration());
+            this.consumeSemicolon();
+        }
+
+        this.expect('}');
+
+        return this.finalize(node, new Node.OJInstanceVariableDeclarations(declarations));
+    }
+
+    oj_parseClassImplementationDefinition(): Node.OJClassImplementation {
+        const node = this.createNode();
+
+        let superClass: Node.Identifier | null = null;
+        let extension = false;
+        let category: Node.Identifier | null = null;
+        let protocolList: Node.OJProtocolList | null = null;
+        let ivarDeclarations: Node.OJInstanceVariableDeclarations | null = null;
+
+        if (this.context.oj_inImplementation) {
+            this.throwError(Messages.OJCannotNestImplementations);
+        }
+
+        this.context.oj_inImplementation = true;
+
+        const oldLabelSet = this.context.labelSet;
+        const previousStrict = this.context.strict;
+        this.context.strict = true;
+
+        if (this.matchKeyword('@class')) {
+            this.expectKeyword('@class');
+        } else {
+            this.expectKeyword('@implementation');
+        }
+
+        const id = this.parseVariableIdentifier();
+
+        // Has superclass
+        if (this.match(':')) {
+            this.expect(':');
+            superClass = this.parseVariableIdentifier();
+        }
+
+        if (this.match('(')) {
+            this.expect('(');
+
+            if (this.match(')')) {
+                extension = true;
+            } else {
+                category = this.parseVariableIdentifier();
+            }
+
+            this.expect(')');
+        }
+
+        if (this.match('<')) {
+            protocolList = this.oj_parseProtocolReferenceList();
+        }
+
+        // Has ivar declarations
+        if (this.match('{')) {
+            if (category) this.throwUnexpectedToken();
+            ivarDeclarations = this.oj_parseInstanceVariableDeclarations();
+        }
+
+        const body = this.oj_parseClassImplementationBody();
+
+        this.expectKeyword('@end');
+
+        this.context.strict = previousStrict;
+        this.context.oj_inImplementation = false;
+        this.context.labelSet = oldLabelSet;
+
+        return this.finalize(node, new Node.OJClassImplementation(id, superClass, category, extension, protocolList, ivarDeclarations, body));
+    }
+
+    oj_parseProtocolReferenceList(): Node.OJProtocolList {
+        var protocolList;
+
+        this.expect('<');
+        protocolList = this.oj_parseProtocolList();
+        this.expect('>');
+
+        return protocolList;
+    }
+
+    oj_parseProtocolList(): Node.OJProtocolList {
+        const node = this.createNode();
+        const protocols: Node.Identifier[] = [];
+
+        protocols.push(this.parseVariableIdentifier());
+
+        while (this.match(',')) {
+            this.expect(',');
+            protocols.push(this.parseVariableIdentifier());
+        }
+
+        return this.finalize(node, new Node.OJProtocolList(protocols));
+    }
+
+    oj_parseProtocolDefinitionBody(): Node.BlockStatement {
+        const node = this.createNode();
+        const sourceElements: any[] = [];
+
+        let optional = false;
+
+        while (true) {
+            const token = this.lookahead;
+            let sourceElement: any = null;
+
+            if (this.matchKeyword('@end')) {
+                break;
+
+            } else if (this.matchKeyword('@required')) {
+                this.nextToken();
+                optional = false;
+
+            } else if (this.matchKeyword('@optional')) {
+                this.nextToken();
+                optional = true;
+
+            } else if (this.matchKeyword('@property')) {
+                sourceElement = this.oj_parsePropertyDirective();
+
+            } else if (this.match('-') || this.match('+')) {
+                sourceElement = this.oj_parseMethodDeclaration();
+
+            } else {
+                this.throwUnexpectedToken(token);
+            }
+
+            if (sourceElement) {
+                if (optional) sourceElement.optional = optional;
+                sourceElements.push(sourceElement);
+            }
+        }
+
+        return this.finalize(node, new Node.BlockStatement(sourceElements));
+    }
+
+    oj_parseProtocolDefinition(): Node.OJProtocolDefinition {
+        const node = this.createNode();
+
+        var protocolList: Node.OJProtocolList | null = null;
+
+        if (this.context.oj_inImplementation) {
+            this.throwError(Messages.OJCannotNestImplementations);
+        }
+
+        const oldLabelSet = this.context.labelSet;
+        const previousStrict = this.context.strict;
+        this.context.strict = true;
+        this.context.oj_inImplementation = true;
+
+        this.expectKeyword('@protocol');
+
+        const id = this.parseVariableIdentifier();
+
+        if (this.match('<')) {
+            protocolList = this.oj_parseProtocolReferenceList();
+        }
+
+        const body = this.oj_parseProtocolDefinitionBody();
+
+        this.expectKeyword('@end');
+
+        this.context.strict = previousStrict;
+        this.context.oj_inImplementation = false;
+        this.context.labelSet = oldLabelSet;
+
+        return this.finalize(node, new Node.OJProtocolDefinition(id, protocolList, body));
+    }
+
+    oj_parseForwardDirective(): Node.OJForwardDirective {
+        const node = this.createNode();
+        const ids: Node.Identifier[] = [];
+
+        let kind = "class";
+
+        this.expectKeyword('@forward');
+
+        if (this.matchKeyword('@protocol')) {
+            this.expectKeyword('@protocol');
+            kind = "protocol";
+
+        } else if (this.matchKeyword('@class')) {
+            this.expectKeyword('@class');
+        }
+
+        ids.push(this.parseVariableIdentifier());
+
+        while (this.match(',')) {
+            this.expect(',');
+            ids.push(this.parseVariableIdentifier());
+        }
+
+        this.consumeSemicolon();
+
+        return this.finalize(node, new Node.OJForwardDirective(kind, ids));
+    }
+
+    oj_parseSqueezeDirective(): Node.OJSqueezeDirective {
+        const node = this.createNode();
+        const ids: Node.Identifier[] = [];
+
+        this.expectKeyword('@squeeze');
+
+        ids.push(this.parseVariableIdentifier());
+
+        while (this.match(',')) {
+            this.expect(',');
+            ids.push(this.parseVariableIdentifier());
+        }
+
+        this.consumeSemicolon();
+
+        return this.finalize(node, new Node.OJSqueezeDirective(ids));
+    }
+
+    oj_parseCastExpression(): Node.OJCastExpression {
+        const node = this.createNode();
+        let id: string;
+
+        this.expectKeyword('@cast');
+        if (this.match('<')) {
+            this.expect('<');
+
+            id = this.oj_parseType(null);
+            
+            this.expect('>');
+            this.expect('(');
+
+        } else {
+            this.expect('(');
+            id = this.oj_parseType(null);
+            this.expect(',');
+        }
+
+        let argument = this.parseExpression();
+
+        this.expect(')');
+
+        return this.finalize(node, new Node.OJCastExpression(id, argument));
+    }
+
+    oj_parseAnyExpression(): Node.OJAnyExpression {
+        const node = this.createNode();
+
+        this.expectKeyword('@any');
+        this.expect('(');
+        let argument = this.parseExpression();
+        this.expect(')');
+
+        return this.finalize(node, new Node.OJAnyExpression(argument));
+    }
+
+    oj_parseMessageReceiver(): Node.Identifier {
+        const node = this.createNode();
+        const token = this.nextToken();
+
+        let isSuper = (token.type == Token.Keyword && token.value == "super");
+        
+        let isValidType = token.type === Token.Identifier ||
+            token.type === Token.BooleanLiteral ||
+            token.type === Token.NullLiteral;
+
+        if (!(isSuper || isValidType)) {
+            this.throwUnexpectedToken(token);
+        }
+
+        return this.finalize(node, new Node.Identifier(token.value));
+    }
+
+    oj_parseArrayInitializerOrMessageExpression() {
+        const node = this.createNode();
+        const elements: Node.ArrayExpressionElement[] = [];
+
+        let ojSelectorName: string | null = null;
+        let ojMessageSelectors: Node.OJMessageSelector[] | null = null;
+        let ojReceiver: Node.OJMessageReceiver | null = null;
+        let ojMightBeMessageExpression = true, ojMaybeElement;
+
+        this.expect('[');
+
+        while (!this.match(']')) {
+            if (this.match(',')) {
+                this.nextToken();
+                elements.push(null);
+
+            } else if (this.match('...')) {
+                const element = this.parseSpreadElement();
+                if (!this.match(']')) {
+                    this.context.isAssignmentTarget = false;
+                    this.context.isBindingElement = false;
+                    this.expect(',');
+                }
+                elements.push(element);
+
+            } else if (ojMightBeMessageExpression) {
+                if (this.matchKeyword("super")) {
+                    ojMaybeElement = this.oj_parseMessageReceiver();
+                } else {
+                    ojMaybeElement = this.inheritCoverGrammar(this.parseAssignmentExpression);
+                    ojMightBeMessageExpression = !(this.match(",") || this.match("]"));
+                }
+
+                // At this point, ojMightBeMessageExpression is really "isMessageExpression"
+                if (ojMightBeMessageExpression) {
+                    ojReceiver = new Node.OJMessageReceiver(ojMaybeElement);
+                    if (ojMaybeElement.loc) {
+                        (ojReceiver as any).loc = ojMaybeElement.loc;
+                    }
+
+                    ojMessageSelectors = [ ];
+                    ojSelectorName = "";
+
+                    while (!this.match(']')) {
+                        const ojMessageSelector = this.oj_parseMessageSelector();
+                        ojMessageSelectors.push(ojMessageSelector);
+
+                        ojSelectorName += ojMessageSelector.name.value;
+                        if (ojMessageSelector.argument || ojMessageSelector.arguments) {
+                            ojSelectorName += ":";
+                        }
+                    }
+
+                    break;
+
+                } else {
+                    elements.push(ojMaybeElement);
+
+                    if (!this.match(']')) {
+                        this.expect(',');
+                    }                
+                }
+
+            } else {
+                elements.push(this.inheritCoverGrammar(this.parseAssignmentExpression));
+                if (!this.match(']')) {
+                    this.expect(',');
+                }
+            }
+        }
+        this.expect(']');
+
+        if (ojMessageSelectors) {
+            return this.finalize(node, new Node.OJMessageExpression(ojReceiver as Node.OJMessageReceiver, ojSelectorName as string, ojMessageSelectors));
+        } else {            
+            return this.finalize(node, new Node.ArrayExpression(elements));
+        }
+    }
+
+    oj_parseMessageSelector(): Node.OJMessageSelector {
+        const node = this.createNode();
+
+        let name = this.oj_parseMethodNameSegment();
+
+        let arg:  Node.Expression   | null = null;
+        let args: Node.Expression[] | null = null;
+
+        if (!this.match(']')) {
+            this.expect(':');
+            arg = this.parseAssignmentExpression();
+        }
+
+        if (this.match(',')) {
+            args = [ arg as Node.Expression ];
+            arg = null;
+        }
+
+        while (this.match(',')) {
+            this.expect(',');
+            if (args) args.push(this.parseAssignmentExpression());
+        }
+
+        return this.finalize(node, new Node.OJMessageSelector(name, arg, args));
+    }
+
+    oj_parseConstDeclaration(): Node.OJConstDeclaration {
+        const node = this.createNode();
+
+        this.expectKeyword("@const");
+
+        let declarations = this.parseVariableDeclarationList({ inFor: false });
+
+        this.consumeSemicolon();
+
+        return this.finalize(node, new Node.OJConstDeclaration(declarations));
+    }
+
+    oj_parseEnumDeclaration(): Node.VariableDeclarator {
+        const node = this.createNode();
+        const id = this.parseVariableIdentifier();
+
+        let init: Node.Expression | null = null;
+
+        // 12.2.1
+        if (this.context.strict && this.scanner.isRestrictedWord(id.name)) {
+            this.tolerateError(Messages.StrictVarName);
+        }
+
+        if (this.match('=')) {
+            this.nextToken();
+            init = this.parseAssignmentExpression();
+        }
+
+        return this.finalize(node, new Node.VariableDeclarator(id, init));
+    }
+
+    oj_parseEnumStatement(): Node.OJEnumDeclaration {
+        const node = this.createNode();
+        const declarations: Node.VariableDeclarator[] = [];
+        
+        let id: Node.Identifier | null = null;
+
+        this.expectKeyword('@enum');
+
+        if (!this.match('{')) {
+            // Name of enum
+            id = this.parseVariableIdentifier();
+        }
+
+        this.expect("{");
+
+        while (!this.match('}')) {
+            declarations.push(this.oj_parseEnumDeclaration());
+            if (!this.match('}')) this.expect(',');
+        }
+
+        this.expect("}");
+
+        this.consumeSemicolon();
+
+        return this.finalize(node, new Node.OJEnumDeclaration(id, declarations));
+    }
+
+    oj_parseTypeDefinition(): Node.OJTypeDefinition {
+        const node = this.createNode();
+        const params: Node.OJIdentifierWithAnnotation[] = [];
+
+        let annotation: Node.OJTypeAnnotation | null = null;
+        let kind: string = '';
+
+        this.expectKeyword('@type');
+
+        let name = this.parseVariableIdentifier().name;
+        this.expect("=");
+
+        if (this.match('{')) {
+            kind = 'object';
+
+            this.expect('{');
+
+            while (!this.match('}')) {
+                const paramName = this.parseIdentifierName().name;
+                const paramAnnotation = this.oj_parseTypeAnnotation({ allowOptional: true });
+
+                params.push(new Node.OJIdentifierWithAnnotation(paramName, paramAnnotation));
+
+                if (!this.match('}')) {
+                    this.expect(",")
+                }
+            }
+
+            this.expect('}');
+
+        } else if (this.match('[')) {
+            kind = 'tuple';
+            this.expect('[')
+
+            while (!this.match(']')) {
+                let paramName = "" + params.length;
+                let paramAnnotation = new Node.OJTypeAnnotation(this.oj_parseType(null), false);
+
+                params.push(new Node.OJIdentifierWithAnnotation(paramName, paramAnnotation));
+
+                if (!this.match(']')) {
+                    this.expect(',');
+                }
+            }
+
+            this.expect(']');
+
+        } else if (this.matchKeyword('function')) {
+            kind = 'function';
+            this.expectKeyword('function');
+
+            this.expect('(')
+
+            while (!this.match(')')) {
+                let paramName = this.parseVariableIdentifier().name;
+                let paramAnnotation = this.oj_parseTypeAnnotation({ allowOptional: true });
+
+                params.push(new Node.OJIdentifierWithAnnotation(paramName, paramAnnotation));
+
+                if (!this.match(')')) {
+                    this.expect(',');
+                }
+            }
+
+            this.expect(')');
+            annotation = this.oj_parseTypeAnnotation({ allowVoid: true });
+
+        } else if (this.lookahead.type === Token.Identifier) {
+            kind = 'alias';
+
+            annotation = new Node.OJTypeAnnotation(this.oj_parseType(null), false);
+
+        } else {
+            this.throwUnexpectedToken();
+        }
+
+        this.consumeSemicolon();
+
+        return this.finalize(node, new Node.OJTypeDefinition(name, kind, params, annotation));
+    }
+
+    oj_parseTypeAnnotation(options): Node.OJTypeAnnotation {
+        const node = this.createNode();
+        let optional = false;
+
+        if (options && options.allowOptional) {
+            if (this.match('?')) {
+                this.expect('?');
+                optional = true;
+            }
+        }
+
+        this.expect(':');
+        return this.finalize(node, new Node.OJTypeAnnotation(this.oj_parseType(options), optional));
+    }
+
+    oj_parseVariableIdentifierWithOptionalTypeAnnotation(kind?: string): Node.Identifier {
+        const node = this.createNode();
+        const token = this.nextToken();
+
+        if (token.type === Token.Keyword && token.value === 'yield') {
+            if (this.context.strict) {
+                this.tolerateUnexpectedToken(token, Messages.StrictReservedWord);
+            } else if (!this.context.allowYield) {
+                this.throwUnexpectedToken(token);
+            }
+        } else if (token.type !== Token.Identifier) {
+            if (this.context.strict && token.type === Token.Keyword && this.scanner.isStrictModeReservedWord(token.value as string)) {
+                this.tolerateUnexpectedToken(token, Messages.StrictReservedWord);
+            } else {
+                if (this.context.strict || token.value !== 'let' || kind !== 'var') {
+                    this.throwUnexpectedToken(token);
+                }
+            }
+        } else if ((this.context.isModule || this.context.await) && token.type === Token.Identifier && token.value === 'await') {
+            this.tolerateUnexpectedToken(token);
+        }
+
+        if (this.match(':')) {
+            return this.finalize(node, new Node.OJIdentifierWithAnnotation(token.value as string, this.oj_parseTypeAnnotation(null)));
+        } else {
+            return this.finalize(node, new Node.Identifier(token.value));
+        }
+    }
+
+    oj_parseEachStatement(): Node.OJEachStatement {
+        const node = this.createNode();
+
+        let left;
+
+        this.expectKeyword('@each');
+
+        this.expect('(');
+
+        if (this.matchKeyword('var') || this.matchKeyword('let')) {
+            const marker = this.createNode();
+            const kind = this.nextToken().value as string;
+
+            const previousAllowIn = this.context.allowIn;
+            this.context.allowIn = false;
+
+            const declarations = this.parseBindingList(kind, { inFor: false });
+
+            left = this.finalize(marker, new Node.VariableDeclaration(declarations, kind));
+
+            this.context.allowIn = previousAllowIn;
+
+        } else {
+            left = this.parseVariableIdentifier();
+        }
+
+        this.expectKeyword('in');
+        const right = this.parseExpression();
+
+        this.expect(')');
+
+        const oldInIteration = this.context.inIteration;
+        this.context.inIteration = true;
+
+        const body = this.parseStatement();
+
+        this.context.inIteration = oldInIteration;
+
+        return this.finalize(node, new Node.OJEachStatement(left, right, body));
+    }
+
+    oj_parseGlobalDeclaration() {
+        const node = this.createNode();
+
+        this.expectKeyword('@global');
+
+        if (this.matchKeyword("function")) {
+            const declaration = this.parseFunctionDeclaration();
+            return this.finalize(node, new Node.OJGlobalDeclaration(declaration as Node.FunctionDeclaration, null));
+
+        } else {
+            const declarators = this.parseBindingList('var', {inFor: false});
+            return this.finalize(node, new Node.OJGlobalDeclaration(null, declarators));
+        }
+    }
+
+    oj_parseBridgedDeclaration(): Node.OJBridgedDeclaration {
+        const node = this.createNode();
+        let declaration;
+
+        this.expectKeyword('@bridged');
+
+        if (this.matchKeyword("@const")) {
+            declaration = this.oj_parseConstDeclaration();
+        } else if (this.matchKeyword("@enum")) {
+            declaration = this.oj_parseEnumStatement();
+        } else {
+            this.throwUnexpectedToken();
+        }
+
+        return this.finalize(node, new Node.OJBridgedDeclaration(declaration));
+    }
+
+//!oj: end changes
+
 
 }

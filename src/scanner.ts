@@ -341,6 +341,32 @@ export class Scanner {
     // https://tc39.github.io/ecma262/#sec-keywords
 
     private isKeyword(id: string): boolean {
+        //!oj: start changes
+        if (id[0] === '@') {
+            return (id === '@end')            ||
+                   (id === '@implementation') ||
+                   (id === '@protocol')       ||
+                   (id === '@optional')       ||
+                   (id === '@required')       ||
+                   (id === '@class')          ||
+                   (id === '@forward')        ||
+                   (id === '@property')       ||
+                   (id === '@synthesize')     ||
+                   (id === '@selector')       ||
+                   (id === '@dynamic')        ||
+                   (id === '@enum')           ||
+                   (id === '@const')          ||
+                   (id === '@squeeze')        ||
+                   (id === '@cast')           ||
+                   (id === '@any')            ||
+                   (id === '@each')           ||
+                   (id === '@global')         ||
+                   (id === '@type')           ||
+                   (id === '@bridged')        ||
+                   (id === '@observe');
+        }
+        //!oj: end changes
+
         switch (id.length) {
             case 2:
                 return (id === 'if') || (id === 'in') || (id === 'do');
@@ -536,9 +562,9 @@ export class Scanner {
             type = Token.Identifier;
         } else if (this.isKeyword(id)) {
             type = Token.Keyword;
-        } else if (id === 'null') {
+        } else if (id === 'null' || id === 'Nil' || id === 'nil' || id === 'NULL') { //!oj: Add nil and NULL
             type = Token.NullLiteral;
-        } else if (id === 'true' || id === 'false') {
+        } else if (id === 'true' || id === 'false' || id === 'YES' || id === 'NO') { //!oj: Add YES and NO
             type = Token.BooleanLiteral;
         } else {
             type = Token.Identifier;

@@ -61,4 +61,8 @@ export const Messages = {
     UnexpectedTokenIllegal: 'Unexpected token ILLEGAL',
     UnknownLabel: 'Undefined label \'%0\'',
     UnterminatedRegExp: 'Invalid regular expression: missing /'
+//!oj: begin changes
+    ,
+    OJCannotNestImplementations: 'OJ: Cannot nest implementation blocks'
+//!oj: end changes
 };
