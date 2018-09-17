@@ -4134,8 +4134,7 @@ export class Parser {
         const node = this.createNode();
         const sourceElements: Node.Statement[] = [];
 
-        var sourceElement, directive, firstRestricted,
-            oldLabelSet, oldInIteration, oldInSwitch, oldInFunctionBody;
+        var sourceElement;
 
         while (true) {
             const token = this.lookahead;
