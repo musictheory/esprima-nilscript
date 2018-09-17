@@ -341,7 +341,7 @@ export class Scanner {
     // https://tc39.github.io/ecma262/#sec-keywords
 
     private isKeyword(id: string): boolean {
-        //!oj: start changes
+        //!ns: start changes
         if (id[0] === '@') {
             return (id === '@end')            ||
                    (id === '@implementation') ||
@@ -365,7 +365,7 @@ export class Scanner {
                    (id === '@bridged')        ||
                    (id === '@observe');
         }
-        //!oj: end changes
+        //!ns: end changes
 
         switch (id.length) {
             case 2:
@@ -562,9 +562,9 @@ export class Scanner {
             type = Token.Identifier;
         } else if (this.isKeyword(id)) {
             type = Token.Keyword;
-        } else if (id === 'null' || id === 'Nil' || id === 'nil' || id === 'NULL') { //!oj: Add nil and NULL
+        } else if (id === 'null' || id === 'Nil' || id === 'nil' || id === 'NULL') { //!ns: Add nil and NULL
             type = Token.NullLiteral;
-        } else if (id === 'true' || id === 'false' || id === 'YES' || id === 'NO') { //!oj: Add YES and NO
+        } else if (id === 'true' || id === 'false' || id === 'YES' || id === 'NO') { //!ns: Add YES and NO
             type = Token.BooleanLiteral;
         } else {
             type = Token.Identifier;

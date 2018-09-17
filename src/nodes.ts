@@ -415,16 +415,16 @@ export class FunctionDeclaration {
     readonly params: FunctionParameter[];
     readonly body: BlockStatement;
     readonly generator: boolean;
-    readonly annotation: OJTypeAnnotation | null; //!oj: Add annotation
+    readonly annotation: NSTypeAnnotation | null; //!ns: Add annotation
     readonly expression: boolean;
     readonly async: boolean;
-    constructor(id: Identifier | null, params: FunctionParameter[], body: BlockStatement, generator: boolean, annotation: OJTypeAnnotation | null) { //!oj: Add annotation
+    constructor(id: Identifier | null, params: FunctionParameter[], body: BlockStatement, generator: boolean, annotation: NSTypeAnnotation | null) { //!ns: Add annotation
         this.type = Syntax.FunctionDeclaration;
         this.id = id;
         this.params = params;
         this.body = body;
         this.generator = generator;
-        this.annotation = annotation; //!oj: Add annotation
+        this.annotation = annotation; //!ns: Add annotation
         this.expression = false;
         this.async = false;
     }
@@ -436,16 +436,16 @@ export class FunctionExpression {
     readonly params: FunctionParameter[];
     readonly body: BlockStatement;
     readonly generator: boolean;
-    readonly annotation: OJTypeAnnotation | null; //!oj: Add annotation
+    readonly annotation: NSTypeAnnotation | null; //!ns: Add annotation
     readonly expression: boolean;
     readonly async: boolean;
-    constructor(id: Identifier | null, params: FunctionParameter[], body: BlockStatement, generator: boolean, annotation: OJTypeAnnotation | null) { //!oj: Add annotation
+    constructor(id: Identifier | null, params: FunctionParameter[], body: BlockStatement, generator: boolean, annotation: NSTypeAnnotation | null) { //!ns: Add annotation
         this.type = Syntax.FunctionExpression;
         this.id = id;
         this.params = params;
         this.body = body;
         this.generator = generator;
-        this.annotation = annotation; //!oj: Add annotation
+        this.annotation = annotation; //!ns: Add annotation
         this.expression = false;
         this.async = false;
     }
@@ -454,11 +454,11 @@ export class FunctionExpression {
 export class Identifier {
     readonly type: string;
     readonly name: string;
-    readonly annotation: OJTypeAnnotation | null; //!oj: Add annotation
+    readonly annotation: NSTypeAnnotation | null; //!ns: Add annotation
     constructor(name) {
         this.type = Syntax.Identifier;
         this.name = name;
-        this.annotation = null; //!oj: optimization
+        this.annotation = null; //!ns: optimization
     }
 }
 
@@ -881,62 +881,62 @@ export class YieldExpression {
     }
 }
 
-//!oj: begin changes
-export class OJMessageExpression {
+//!ns: begin changes
+export class NSMessageExpression {
     readonly type: string;
-    readonly receiver: OJMessageReceiver;
+    readonly receiver: NSMessageReceiver;
     readonly selectorName: string;
-    readonly messageSelectors: OJMessageSelector[];
-    constructor(receiver: OJMessageReceiver, selectorName: string, messageSelectors: OJMessageSelector[]) {
-        this.type = Syntax.OJMessageExpression;
+    readonly messageSelectors: NSMessageSelector[];
+    constructor(receiver: NSMessageReceiver, selectorName: string, messageSelectors: NSMessageSelector[]) {
+        this.type = Syntax.NSMessageExpression;
         this.receiver = receiver;
         this.selectorName = selectorName;
         this.messageSelectors = messageSelectors;
     }
 }
 
-export class OJMessageReceiver {
+export class NSMessageReceiver {
     readonly type: string;
     readonly value;
     constructor(value) {
-        this.type = Syntax.OJMessageReceiver;
+        this.type = Syntax.NSMessageReceiver;
         this.value = value;
     }
 }
 
-export class OJMessageSelector {
+export class NSMessageSelector {
     readonly type: string;
-    readonly name: OJMethodNameSegment;
+    readonly name: NSMethodNameSegment;
     readonly argument: Expression | null;
     readonly arguments: Expression[] | null;
-    constructor(name: OJMethodNameSegment, arg: Expression | null, args: Expression[] | null) {
-        this.type = Syntax.OJMessageSelector;
+    constructor(name: NSMethodNameSegment, arg: Expression | null, args: Expression[] | null) {
+        this.type = Syntax.NSMessageSelector;
         this.name = name;
         this.argument = arg;
         this.arguments = args;
     }
 }
 
-export class OJMethodNameSegment {
+export class NSMethodNameSegment {
     readonly type: string;
     readonly value;
     constructor(value) {
-        this.type = Syntax.OJMethodNameSegment;
+        this.type = Syntax.NSMethodNameSegment;
         this.value = value;
     }
 }
 
-export class OJClassImplementation {
+export class NSClassImplementation {
     readonly type: string;
     readonly id: Identifier;
     readonly body: BlockStatement;
     readonly superClass: Identifier | null;
     readonly category: Identifier | null;
     readonly extension: boolean;
-    readonly protocolList: OJProtocolList | null;
-    readonly ivarDeclarations: OJInstanceVariableDeclarations | null;
-    constructor(id: Identifier, superClass: Identifier | null, category: Identifier | null, extension: boolean, protocolList:  OJProtocolList | null, ivarDeclarations: OJInstanceVariableDeclarations | null, body: BlockStatement) {
-        this.type = Syntax.OJClassImplementation;
+    readonly protocolList: NSProtocolList | null;
+    readonly ivarDeclarations: NSInstanceVariableDeclarations | null;
+    constructor(id: Identifier, superClass: Identifier | null, category: Identifier | null, extension: boolean, protocolList:  NSProtocolList | null, ivarDeclarations: NSInstanceVariableDeclarations | null, body: BlockStatement) {
+        this.type = Syntax.NSClassImplementation;
         this.id   = id;
         this.body = body;
         this.superClass = superClass;
@@ -948,15 +948,15 @@ export class OJClassImplementation {
 }
 
 
-export class OJMethodDefinition {
+export class NSMethodDefinition {
     readonly type: string;
     readonly selectorType: string;
     readonly selectorName: string;
-    readonly returnType: OJParameterType | null;
-    readonly methodSelectors: OJMethodSelector[];
+    readonly returnType: NSParameterType | null;
+    readonly methodSelectors: NSMethodSelector[];
     readonly body: BlockStatement;
-    constructor(selectorType: string, selectorName: string, returnType: OJParameterType | null, methodSelectors: OJMethodSelector[], body: BlockStatement) {
-        this.type = Syntax.OJMethodDefinition;
+    constructor(selectorType: string, selectorName: string, returnType: NSParameterType | null, methodSelectors: NSMethodSelector[], body: BlockStatement) {
+        this.type = Syntax.NSMethodDefinition;
         this.selectorType = selectorType;
         this.selectorName = selectorName;
         this.returnType = returnType;
@@ -965,210 +965,210 @@ export class OJMethodDefinition {
     }
 }
 
-export class OJMethodSelector {
+export class NSMethodSelector {
     readonly type: string;
-    readonly name: OJMethodNameSegment;
-    readonly methodType: OJParameterType | null;
+    readonly name: NSMethodNameSegment;
+    readonly methodType: NSParameterType | null;
     readonly variableName : Identifier | null;
-    constructor (name: OJMethodNameSegment, methodType: OJParameterType | null, variableName: Identifier | null) {
-        this.type = Syntax.OJMethodSelector;
+    constructor (name: NSMethodNameSegment, methodType: NSParameterType | null, variableName: Identifier | null) {
+        this.type = Syntax.NSMethodSelector;
         this.name = name;
         this.methodType = methodType;
         this.variableName = variableName;
     }
 }
 
-export class OJSelector {
+export class NSSelector {
     readonly type: string;
     readonly selectorName: string;
     constructor (name: string) {
-        this.type = Syntax.OJSelector;
+        this.type = Syntax.NSSelector;
         this.selectorName = name;
     }
 }
 
-export class OJParameterType {
+export class NSParameterType {
     readonly type: string;
     readonly value: string;
     constructor (value: string) {
-        this.type = Syntax.OJParameterType;
+        this.type = Syntax.NSParameterType;
         this.value = value;
     }
 }
 
-export class OJInstanceVariableDeclarations {
+export class NSInstanceVariableDeclarations {
     readonly type: string;
-    readonly declarations: OJInstanceVariableDeclaration[];
-    constructor (declarations: OJInstanceVariableDeclaration[]) {
-        this.type = Syntax.OJInstanceVariableDeclarations;
+    readonly declarations: NSInstanceVariableDeclaration[];
+    constructor (declarations: NSInstanceVariableDeclaration[]) {
+        this.type = Syntax.NSInstanceVariableDeclarations;
         this.declarations = declarations;
     }
 }
 
-export class OJInstanceVariableDeclaration {
+export class NSInstanceVariableDeclaration {
     readonly type: string;
-    readonly parameterType: OJParameterType;
+    readonly parameterType: NSParameterType;
     readonly ivars: Identifier[];
-    constructor (parameterType: OJParameterType, ivars: Identifier[]) {
-        this.type = Syntax.OJInstanceVariableDeclaration;
+    constructor (parameterType: NSParameterType, ivars: Identifier[]) {
+        this.type = Syntax.NSInstanceVariableDeclaration;
         this.parameterType = parameterType;
         this.ivars = ivars;
     }
 }
 
-export class OJPropertyDirective {
+export class NSPropertyDirective {
     readonly type: string;
-    readonly id: OJIdentifierWithAnnotation;
-    readonly attributes: OJPropertyAttribute[];
-    constructor(id: OJIdentifierWithAnnotation, attributes: OJPropertyAttribute[]) {
-        this.type = Syntax.OJPropertyDirective;
+    readonly id: NSIdentifierWithAnnotation;
+    readonly attributes: NSPropertyAttribute[];
+    constructor(id: NSIdentifierWithAnnotation, attributes: NSPropertyAttribute[]) {
+        this.type = Syntax.NSPropertyDirective;
         this.id = id;
         this.attributes = attributes;
     }
 }
 
-export class OJPropertyAttribute {
+export class NSPropertyAttribute {
     readonly type: string;
     readonly name: string;
-    readonly selector: OJSelector | null;
-    constructor(name: string, selector: OJSelector | null) {
-        this.type = Syntax.OJPropertyAttribute;
+    readonly selector: NSSelector | null;
+    constructor(name: string, selector: NSSelector | null) {
+        this.type = Syntax.NSPropertyAttribute;
         this.name = name;
         this.selector = selector;
     }
 }
 
-export class OJObserveDirective {
+export class NSObserveDirective {
     readonly type: string;
     readonly ids: Identifier[];
-    readonly attributes: OJObserveAttribute[];
-    constructor (ids: Identifier[], attributes: OJObserveAttribute[]) {
-        this.type = Syntax.OJObserveDirective;
+    readonly attributes: NSObserveAttribute[];
+    constructor (ids: Identifier[], attributes: NSObserveAttribute[]) {
+        this.type = Syntax.NSObserveDirective;
         this.ids = ids;
         this.attributes = attributes;
     }
 }
 
-export class OJObserveAttribute {
+export class NSObserveAttribute {
     readonly type: string;
     readonly name: string;
-    readonly selector: OJSelector | null;
-    constructor (name: string, selector: OJSelector | null) {
-        this.type = Syntax.OJObserveAttribute;
+    readonly selector: NSSelector | null;
+    constructor (name: string, selector: NSSelector | null) {
+        this.type = Syntax.NSObserveAttribute;
         this.name = name;
         this.selector = selector;
     }
 }
 
-export class OJSynthesizeDirective {
+export class NSSynthesizeDirective {
     readonly type: string;
-    readonly pairs: OJSynthesizePair[];
-    constructor (pairs: OJSynthesizePair[]) {
-        this.type = Syntax.OJSynthesizeDirective;
+    readonly pairs: NSSynthesizePair[];
+    constructor (pairs: NSSynthesizePair[]) {
+        this.type = Syntax.NSSynthesizeDirective;
         this.pairs = pairs;
     }
 }
 
-export class OJForwardDirective {
+export class NSForwardDirective {
     readonly type: string;
     readonly kind: string;
     readonly ids: Identifier[];
     constructor (kind: string, ids: Identifier[]) {
-        this.type = Syntax.OJForwardDirective;
+        this.type = Syntax.NSForwardDirective;
         this.kind = kind;
         this.ids = ids;
     }
 }
 
-export class OJSqueezeDirective {
+export class NSSqueezeDirective {
     readonly type: string;
     readonly ids: Identifier[];
     constructor (ids: Identifier[]) {
-        this.type = Syntax.OJSqueezeDirective;
+        this.type = Syntax.NSSqueezeDirective;
         this.ids = ids;
     }
 }
 
-export class OJSynthesizePair {
+export class NSSynthesizePair {
     readonly type: string;
     readonly id: Identifier;
     readonly backing: Identifier | null;
     constructor (id: Identifier, backing: Identifier | null) {
-        this.type = Syntax.OJSynthesizePair;
+        this.type = Syntax.NSSynthesizePair;
         this.id = id;
         this.backing = backing;
     }
 }
 
-export class OJDynamicDirective {
+export class NSDynamicDirective {
     readonly type: string;
     readonly ids: Identifier[];
     constructor (ids: Identifier[]) {
-        this.type = Syntax.OJDynamicDirective;
+        this.type = Syntax.NSDynamicDirective;
         this.ids = ids;
     }
 }
 
-export class OJSelectorDirective {
+export class NSSelectorDirective {
     readonly type: string;
     readonly name: string;
     constructor (name: string) {
-        this.type = Syntax.OJSelectorDirective;
+        this.type = Syntax.NSSelectorDirective;
         this.name = name;
     }
 }
 
-export class OJConstDeclaration {
+export class NSConstDeclaration {
     readonly type: string;
     readonly declarations: VariableDeclarator[];
     constructor (declarations: VariableDeclarator[]) {
-        this.type = Syntax.OJConstDeclaration;
+        this.type = Syntax.NSConstDeclaration;
         this.declarations = declarations;
     }
 }
 
-export class OJEnumDeclaration {
+export class NSEnumDeclaration {
     readonly type: string;
     readonly id: Identifier | null;
     readonly declarations: VariableDeclarator[];
     constructor (id: Identifier | null, declarations: VariableDeclarator[]) {
-        this.type = Syntax.OJEnumDeclaration;
+        this.type = Syntax.NSEnumDeclaration;
         this.id = id;
         this.declarations = declarations;
     }
 }
 
-export class OJProtocolList {
+export class NSProtocolList {
     readonly type: string;
     readonly protocols: Identifier[];
     constructor (protocols: Identifier[]) {
-        this.type = Syntax.OJProtocolList;
+        this.type = Syntax.NSProtocolList;
         this.protocols = protocols;
     }
 }
 
-export class OJProtocolDefinition {
+export class NSProtocolDefinition {
     readonly type: string;
     readonly id: Identifier;
-    readonly protocolList: OJProtocolList | null;
+    readonly protocolList: NSProtocolList | null;
     readonly body: BlockStatement;
-    constructor (id: Identifier, protocolList: OJProtocolList | null, body: BlockStatement) {
-        this.type = Syntax.OJProtocolDefinition;
+    constructor (id: Identifier, protocolList: NSProtocolList | null, body: BlockStatement) {
+        this.type = Syntax.NSProtocolDefinition;
         this.id = id;
         this.protocolList = protocolList;
         this.body = body;
     }
 }
 
-export class OJMethodDeclaration {
+export class NSMethodDeclaration {
     readonly type: string;
     readonly selectorType: string;
     readonly selectorName: string;
-    readonly returnType: OJParameterType | null;
-    readonly methodSelectors: OJMethodSelector[];
+    readonly returnType: NSParameterType | null;
+    readonly methodSelectors: NSMethodSelector[];
     readonly optional: boolean;
-    constructor (selectorType: string, selectorName: string, returnType: OJParameterType | null, methodSelectors: OJMethodSelector[]) {
-        this.type = Syntax.OJMethodDeclaration;
+    constructor (selectorType: string, selectorName: string, returnType: NSParameterType | null, methodSelectors: NSMethodSelector[]) {
+        this.type = Syntax.NSMethodDeclaration;
         this.selectorType = selectorType;
         this.selectorName = selectorName;
         this.returnType = returnType;
@@ -1177,45 +1177,45 @@ export class OJMethodDeclaration {
     }
 }
 
-export class OJCastExpression {
+export class NSCastExpression {
     readonly type: string;
     readonly id: string;
     readonly argument: Expression;
     constructor (id: string, argument: Expression) {
-        this.type = Syntax.OJCastExpression;
+        this.type = Syntax.NSCastExpression;
         this.id = id;
         this.argument = argument;
     }
 }
 
-export class OJAnyExpression {
+export class NSAnyExpression {
     readonly type: string;
     readonly argument: Expression;
     constructor (argument: Expression) {
-        this.type = Syntax.OJAnyExpression;
+        this.type = Syntax.NSAnyExpression;
         this.argument = argument;
     }
 }
 
-export class OJTypeAnnotation {
+export class NSTypeAnnotation {
     readonly type: string;
     readonly value: string;
     readonly optional: boolean;
     constructor (value: string, optional: boolean) {
-        this.type = Syntax.OJTypeAnnotation;
+        this.type = Syntax.NSTypeAnnotation;
         this.value = value;
         this.optional = optional;
     }
 }
 
-export class OJTypeDefinition {
+export class NSTypeDefinition {
     readonly type: string;
     readonly name: string;
     readonly kind: string;
-    readonly params: OJIdentifierWithAnnotation[];
-    readonly annotation: OJTypeAnnotation | null;
-    constructor (name: string, kind: string, params: OJIdentifierWithAnnotation[], annotation: OJTypeAnnotation | null) {
-        this.type = Syntax.OJTypeDefinition;
+    readonly params: NSIdentifierWithAnnotation[];
+    readonly annotation: NSTypeAnnotation | null;
+    constructor (name: string, kind: string, params: NSIdentifierWithAnnotation[], annotation: NSTypeAnnotation | null) {
+        this.type = Syntax.NSTypeDefinition;
         this.name = name;
         this.kind = kind;
         this.params = params;
@@ -1223,49 +1223,49 @@ export class OJTypeDefinition {
     }
 }
 
-export class OJEachStatement {
+export class NSEachStatement {
     readonly type: string;
     readonly left: VariableDeclaration | Identifier;
     readonly right: Expression;
     readonly body: Statement;
     constructor (left: VariableDeclaration | Identifier, right: Expression, body: Statement) {
-        this.type = Syntax.OJEachStatement;
+        this.type = Syntax.NSEachStatement;
         this.left = left;
         this.right = right;
         this.body = body;
     }
 }
 
-export class OJGlobalDeclaration {
+export class NSGlobalDeclaration {
     readonly type: string;
     readonly declaration: FunctionDeclaration | null;
     readonly declarators: VariableDeclarator[] | null;
     constructor(declaration: FunctionDeclaration | null, declarators: VariableDeclarator[] | null) {
-        this.type = Syntax.OJGlobalDeclaration;
+        this.type = Syntax.NSGlobalDeclaration;
         this.declaration = declaration;
         this.declarators = declarators;
     }
 }
 
-export class OJBridgedDeclaration {
+export class NSBridgedDeclaration {
     readonly type: string;
-    readonly declaration: OJConstDeclaration | OJEnumDeclaration;
-    constructor (declaration: OJConstDeclaration | OJEnumDeclaration) {
-        this.type = Syntax.OJBridgedDeclaration;
+    readonly declaration: NSConstDeclaration | NSEnumDeclaration;
+    constructor (declaration: NSConstDeclaration | NSEnumDeclaration) {
+        this.type = Syntax.NSBridgedDeclaration;
         this.declaration = declaration;
     }
 }
 
-export class OJIdentifierWithAnnotation {
+export class NSIdentifierWithAnnotation {
     readonly type: string;
     readonly name: string;
-    readonly annotation: OJTypeAnnotation;
-    constructor (name: string, annotation: OJTypeAnnotation) {
+    readonly annotation: NSTypeAnnotation;
+    constructor (name: string, annotation: NSTypeAnnotation) {
         this.type = Syntax.Identifier;
         this.name = name;
         this.annotation = annotation;
     }
 }
 
-//!oj: end changes
+//!ns: end changes
 

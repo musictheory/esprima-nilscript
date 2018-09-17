@@ -29,7 +29,7 @@ interface Context {
     inSwitch: boolean;
     labelSet: any;
     strict: boolean;
-    oj_inImplementation: boolean; //!oj: Add oj_inImplementation
+    ns_inImplementation: boolean; //!ns: Add ns_inImplementation
 }
 
 export interface Marker {
@@ -149,7 +149,7 @@ export class Parser {
             inSwitch: false,
             labelSet: {},
             strict: false,
-            oj_inImplementation: false //!oj: Add oj_inImplementation
+            ns_inImplementation: false //!ns: Add ns_inImplementation
         };
         this.tokens = [];
 
@@ -632,7 +632,7 @@ export class Parser {
                 this.context.isBindingElement = false;
                 token = this.nextToken();
                 raw = this.getTokenRaw(token);
-                expr = this.finalize(node, new Node.Literal(token.value === 'true' || token.value === 'YES', raw)); //!oj: Adding YES
+                expr = this.finalize(node, new Node.Literal(token.value === 'true' || token.value === 'YES', raw)); //!ns: Adding YES
                 break;
 
             case Token.NullLiteral:
@@ -654,7 +654,7 @@ export class Parser {
                         expr = this.inheritCoverGrammar(this.parseGroupExpression);
                         break;
                     case '[':
-                        expr = this.inheritCoverGrammar(this.oj_parseArrayInitializerOrMessageExpression); //!oj: Allow message expressions
+                        expr = this.inheritCoverGrammar(this.ns_parseArrayInitializerOrMessageExpression); //!ns: Allow message expressions
                         break;
                     case '{':
                         expr = this.inheritCoverGrammar(this.parseObjectInitializer);
@@ -686,10 +686,10 @@ export class Parser {
                     } else if (this.matchKeyword('this')) {
                         this.nextToken();
                         expr = this.finalize(node, new Node.ThisExpression());
-//!oj: start changes
+//!ns: start changes
                     } else if (this.matchKeyword('@selector')) {
-                        expr = this.oj_parseSelectorDirective();
-//!oj: end changes
+                        expr = this.ns_parseSelectorDirective();
+//!ns: end changes
                     } else if (this.matchKeyword('class')) {
                         expr = this.parseClassExpression();
                     } else if (this.matchImportCall()) {
@@ -777,7 +777,7 @@ export class Parser {
         const method = this.parsePropertyMethod(params);
         this.context.allowYield = previousAllowYield;
 
-        return this.finalize(node, new Node.FunctionExpression(null, params.params, method, isGenerator, null)); //!oj: null for annotation
+        return this.finalize(node, new Node.FunctionExpression(null, params.params, method, isGenerator, null)); //!ns: null for annotation
     }
 
     parsePropertyMethodAsyncFunction(): Node.FunctionExpression {
@@ -1443,12 +1443,12 @@ export class Parser {
             }
             this.context.isAssignmentTarget = false;
             this.context.isBindingElement = false;
-//!oj: start changes
+//!ns: start changes
         } else if (this.matchKeyword('@cast')) {
-            expr = this.oj_parseCastExpression();
+            expr = this.ns_parseCastExpression();
         } else if (this.matchKeyword('@any')) {
-            expr = this.oj_parseAnyExpression();
-//!oj: end changes
+            expr = this.ns_parseAnyExpression();
+//!ns: end changes
         } else if (this.context.await && this.matchContextualKeyword('await')) {
             expr = this.parseAwaitExpression();
         } else {
@@ -1839,11 +1839,11 @@ export class Parser {
                 case 'function':
                     statement = this.parseFunctionDeclaration();
                     break;
-//!oj: start changes
+//!ns: start changes
                 case '@global':
-                    statement = this.oj_parseGlobalDeclaration();
+                    statement = this.ns_parseGlobalDeclaration();
                     break;
-//!oj: end changes
+//!ns: end changes
                 case 'class':
                     statement = this.parseClassDeclaration();
                     break;
@@ -2060,7 +2060,7 @@ export class Parser {
                 this.tolerateUnexpectedToken(this.lookahead, Messages.LetInLexicalBinding);
             }
             params.push(this.lookahead);
-            pattern = this.oj_parseVariableIdentifierWithOptionalTypeAnnotation(kind); //!oj: Allow type annotation
+            pattern = this.ns_parseVariableIdentifierWithOptionalTypeAnnotation(kind); //!ns: Allow type annotation
         }
 
         return pattern;
@@ -2760,39 +2760,39 @@ export class Parser {
                     case 'with':
                         statement = this.parseWithStatement();
                         break;
-//!oj: Start changes
+//!ns: Start changes
                     case '@class':
                     case '@implementation':
-                        statement = this.oj_parseClassImplementationDefinition();
+                        statement = this.ns_parseClassImplementationDefinition();
                         break;
                     case '@protocol':
-                        statement = this.oj_parseProtocolDefinition();
+                        statement = this.ns_parseProtocolDefinition();
                         break;
                     case '@forward':
-                        statement = this.oj_parseForwardDirective();
+                        statement = this.ns_parseForwardDirective();
                         break;
                     case '@squeeze':
-                        statement = this.oj_parseSqueezeDirective();
+                        statement = this.ns_parseSqueezeDirective();
                         break;
                     case '@bridged':
-                        statement = this.oj_parseBridgedDeclaration();
+                        statement = this.ns_parseBridgedDeclaration();
                         break;
                     case '@const':
-                        statement = this.oj_parseConstDeclaration();
+                        statement = this.ns_parseConstDeclaration();
                         break;
                     case '@enum':
-                        statement = this.oj_parseEnumStatement();
+                        statement = this.ns_parseEnumStatement();
                         break;
                     case '@each':
-                        statement = this.oj_parseEachStatement();
+                        statement = this.ns_parseEachStatement();
                         break;
                     case '@global':
-                        statement = this.oj_parseGlobalDeclaration();
+                        statement = this.ns_parseGlobalDeclaration();
                         break;
                     case '@type':
-                        statement = this.oj_parseTypeDefinition();
+                        statement = this.ns_parseTypeDefinition();
                         break;
-//!oj: End changes
+//!ns: End changes
                     default:
                         statement = this.parseExpressionStatement();
                         break;
@@ -2996,7 +2996,7 @@ export class Parser {
             message = formalParameters.message;
         }
 
-        const annotation = this.match(':') ? this.oj_parseTypeAnnotation({ allowVoid: true }) : null; //!oj: Allow annotations
+        const annotation = this.match(':') ? this.ns_parseTypeAnnotation({ allowVoid: true }) : null; //!ns: Allow annotations
 
         const previousStrict = this.context.strict;
         const previousAllowStrictDirective = this.context.allowStrictDirective;
@@ -3015,7 +3015,7 @@ export class Parser {
         this.context.allowYield = previousAllowYield;
 
         return isAsync ? this.finalize(node, new Node.AsyncFunctionDeclaration(id, params, body)) :
-            this.finalize(node, new Node.FunctionDeclaration(id, params, body, isGenerator, annotation)); //!oj: Allow annotations
+            this.finalize(node, new Node.FunctionDeclaration(id, params, body, isGenerator, annotation)); //!ns: Allow annotations
     }
 
     parseFunctionExpression(): Node.AsyncFunctionExpression | Node.FunctionExpression {
@@ -3068,7 +3068,7 @@ export class Parser {
             message = formalParameters.message;
         }
 
-        const annotation = this.match(':') ? this.oj_parseTypeAnnotation({ allowVoid: true }) : null; //!oj: Allow annotations
+        const annotation = this.match(':') ? this.ns_parseTypeAnnotation({ allowVoid: true }) : null; //!ns: Allow annotations
 
         const previousStrict = this.context.strict;
         const previousAllowStrictDirective = this.context.allowStrictDirective;
@@ -3086,7 +3086,7 @@ export class Parser {
         this.context.allowYield = previousAllowYield;
 
         return isAsync ? this.finalize(node, new Node.AsyncFunctionExpression(id, params, body)) :
-            this.finalize(node, new Node.FunctionExpression(id, params, body, isGenerator, annotation)); //!oj: Allow annotations
+            this.finalize(node, new Node.FunctionExpression(id, params, body, isGenerator, annotation)); //!ns: Allow annotations
     }
 
     // https://tc39.github.io/ecma262/#sec-directive-prologues-and-the-use-strict-directive
@@ -3169,7 +3169,7 @@ export class Parser {
         const method = this.parsePropertyMethod(formalParameters);
         this.context.allowYield = previousAllowYield;
 
-        return this.finalize(node, new Node.FunctionExpression(null, formalParameters.params, method, isGenerator, null)); //!oj: null for annotation
+        return this.finalize(node, new Node.FunctionExpression(null, formalParameters.params, method, isGenerator, null)); //!ns: null for annotation
     }
 
     parseSetterMethod(): Node.FunctionExpression {
@@ -3187,7 +3187,7 @@ export class Parser {
         const method = this.parsePropertyMethod(formalParameters);
         this.context.allowYield = previousAllowYield;
 
-        return this.finalize(node, new Node.FunctionExpression(null, formalParameters.params, method, isGenerator, null));  //!oj: null for annotation
+        return this.finalize(node, new Node.FunctionExpression(null, formalParameters.params, method, isGenerator, null));  //!ns: null for annotation
     }
 
     parseGeneratorMethod(): Node.FunctionExpression {
@@ -3202,7 +3202,7 @@ export class Parser {
         const method = this.parsePropertyMethod(params);
         this.context.allowYield = previousAllowYield;
 
-        return this.finalize(node, new Node.FunctionExpression(null, params.params, method, isGenerator, null)); //!oj: null for annotation
+        return this.finalize(node, new Node.FunctionExpression(null, params.params, method, isGenerator, null)); //!ns: null for annotation
     }
 
     // https://tc39.github.io/ecma262/#sec-generator-function-definitions
@@ -3695,16 +3695,16 @@ export class Parser {
         return exportDeclaration;
     }
 
-//!oj: start changes
+//!ns: start changes
 
-    // OJ additions, based on Objective-C 2.0 Grammar for ANTLR
+    // NilScript additions, based on Objective-C 2.0 Grammar for ANTLR
     // http://www.antlr.org/grammar/1212699960054/ObjectiveC2ansi.g
 
-    oj_init() {
-        // exports.version += "-oj";
+    ns_init() {
+        // exports.version += "-nilscript";
     }
 
-    oj_parseMethodNameSegment(): Node.OJMethodNameSegment {
+    ns_parseMethodNameSegment(): Node.NSMethodNameSegment {
         const node = this.createNode();
 
         var token, value, keyword;
@@ -3724,10 +3724,10 @@ export class Parser {
             this.throwUnexpectedToken(token);
         }
 
-        return this.finalize(node, new Node.OJMethodNameSegment(value));
+        return this.finalize(node, new Node.NSMethodNameSegment(value));
     }
 
-    oj_parseSelector(allowComma): Node.OJSelector {
+    ns_parseSelector(allowComma): Node.NSSelector {
         const node = this.createNode();
         let name = "";
 
@@ -3741,10 +3741,10 @@ export class Parser {
             }
         }
 
-        return this.finalize(node, new Node.OJSelector(name));
+        return this.finalize(node, new Node.NSSelector(name));
     }
 
-    oj_parseSelectorDirective(): Node.OJSelectorDirective {
+    ns_parseSelectorDirective(): Node.NSSelectorDirective {
         const node = this.createNode();
         let name = "";
 
@@ -3752,7 +3752,7 @@ export class Parser {
         this.expect("(");
 
         while (!this.match(')')) {
-            let id = this.oj_parseMethodNameSegment();
+            let id = this.ns_parseMethodNameSegment();
             name += id.value;
 
             if (this.match(':')) {
@@ -3763,16 +3763,16 @@ export class Parser {
 
         this.expect(")");
 
-        return this.finalize(node, new Node.OJSelectorDirective(name));
+        return this.finalize(node, new Node.NSSelectorDirective(name));
     }
 
-    oj_parsePropertyAttribute() {
+    ns_parsePropertyAttribute() {
         const node = this.createNode();
 
         const startToken = this.lookahead;
         let name = this.parseVariableIdentifier().name;
 
-        let selector: Node.OJSelector | null = null;
+        let selector: Node.NSSelector | null = null;
 
         // See ParseObjc.cpp in LLVM clang
         const allowedNames = [
@@ -3796,81 +3796,81 @@ export class Parser {
 
         if (name == 'getter' || name == 'setter') {
             this.expect('=');
-            selector = this.oj_parseSelector(true);
+            selector = this.ns_parseSelector(true);
 
         } else if (allowedNames.indexOf(name) < 0) {
             this.throwUnexpectedToken(startToken);
         }
 
-        return this.finalize(node, new Node.OJPropertyAttribute(name, selector));
+        return this.finalize(node, new Node.NSPropertyAttribute(name, selector));
     }
 
-    oj_parsePropertyDirective() {
+    ns_parsePropertyDirective() {
         const node = this.createNode();
 
-        const attributes: Node.OJPropertyAttribute[] = [ ];
+        const attributes: Node.NSPropertyAttribute[] = [ ];
 
         this.expectKeyword('@property');
 
         if (this.match('(')) {
             this.expect('(');
 
-            attributes.push(this.oj_parsePropertyAttribute());
+            attributes.push(this.ns_parsePropertyAttribute());
 
             while (this.match(',')) {
                 this.expect(',');
-                attributes.push(this.oj_parsePropertyAttribute());
+                attributes.push(this.ns_parsePropertyAttribute());
             }
 
             this.expect(')');
         }
 
-        const annotation = new Node.OJTypeAnnotation(this.oj_parseType(null), false);
+        const annotation = new Node.NSTypeAnnotation(this.ns_parseType(null), false);
 
         let name = this.parseVariableIdentifier().name;
 
-        const id = new Node.OJIdentifierWithAnnotation(name, annotation);
+        const id = new Node.NSIdentifierWithAnnotation(name, annotation);
 
         this.consumeSemicolon();
 
-        return this.finalize(node, new Node.OJPropertyDirective(id, attributes));
+        return this.finalize(node, new Node.NSPropertyDirective(id, attributes));
     }
 
-    oj_parseObserveAttribute(): Node.OJObserveAttribute {
+    ns_parseObserveAttribute(): Node.NSObserveAttribute {
         const node = this.createNode();
 
         const startToken = this.lookahead;
         let name = this.parseVariableIdentifier().name;
 
-        let selector: Node.OJSelector | null = null;
+        let selector: Node.NSSelector | null = null;
 
         const allowedNames = [ 'change', 'set' ];
 
         if (name == 'before' || name == 'after') {
             this.expect('=');
-            selector = this.oj_parseSelector(true);
+            selector = this.ns_parseSelector(true);
 
         } else if (allowedNames.indexOf(name) < 0) {
             this.throwUnexpectedToken(startToken);
         }
 
-        return this.finalize(node, new Node.OJObserveAttribute(name, selector));
+        return this.finalize(node, new Node.NSObserveAttribute(name, selector));
     }
 
-    oj_parseObserveDirective(): Node.OJObserveDirective {
+    ns_parseObserveDirective(): Node.NSObserveDirective {
         const node = this.createNode();
-        const attributes: Node.OJObserveAttribute[] = [];
+        const attributes: Node.NSObserveAttribute[] = [];
         const ids: Node.Identifier[] = [];
 
         this.expectKeyword('@observe');
 
         this.expect('(');
 
-        attributes.push(this.oj_parseObserveAttribute());
+        attributes.push(this.ns_parseObserveAttribute());
 
         while (this.match(',')) {
             this.expect(',');
-            attributes.push(this.oj_parseObserveAttribute());
+            attributes.push(this.ns_parseObserveAttribute());
         }
 
         this.expect(')');
@@ -3884,10 +3884,10 @@ export class Parser {
 
         this.consumeSemicolon();
 
-        return this.finalize(node, new Node.OJObserveDirective(ids, attributes));
+        return this.finalize(node, new Node.NSObserveDirective(ids, attributes));
     }
 
-    oj_parseSynthesizePair(): Node.OJSynthesizePair {
+    ns_parseSynthesizePair(): Node.NSSynthesizePair {
         const node = this.createNode();
 
         let id = this.parseVariableIdentifier();
@@ -3898,28 +3898,28 @@ export class Parser {
             backing = this.parseVariableIdentifier();
         }
 
-        return this.finalize(node, new Node.OJSynthesizePair(id, backing));
+        return this.finalize(node, new Node.NSSynthesizePair(id, backing));
     }
     
-    oj_parseSynthesizeDirective(): Node.OJSynthesizeDirective {
+    ns_parseSynthesizeDirective(): Node.NSSynthesizeDirective {
         const node = this.createNode();
-        const pairs: Node.OJSynthesizePair[] = [];
+        const pairs: Node.NSSynthesizePair[] = [];
 
         this.expectKeyword('@synthesize');
 
-        pairs.push(this.oj_parseSynthesizePair());
+        pairs.push(this.ns_parseSynthesizePair());
 
         while (this.match(',')) {
             this.expect(',');
-            pairs.push(this.oj_parseSynthesizePair());
+            pairs.push(this.ns_parseSynthesizePair());
         }
 
         this.consumeSemicolon();
 
-        return this.finalize(node, new Node.OJSynthesizeDirective(pairs));
+        return this.finalize(node, new Node.NSSynthesizeDirective(pairs));
     }
 
-    oj_parseDynamicDirective(): Node.OJDynamicDirective {
+    ns_parseDynamicDirective(): Node.NSDynamicDirective {
         const node = this.createNode();
         const ids: Node.Identifier[] = [];
 
@@ -3934,11 +3934,11 @@ export class Parser {
 
         this.consumeSemicolon();
 
-        return this.finalize(node, new Node.OJDynamicDirective(ids));
+        return this.finalize(node, new Node.NSDynamicDirective(ids));
     }
 
     // This should be called when lookahead is a '<' token.
-    oj_parseTypeAngleSuffix(): string {
+    ns_parseTypeAngleSuffix(): string {
         const parser = this;
         const parts: string[] = [];
         let angles = 0;
@@ -3997,7 +3997,7 @@ export class Parser {
         return parts.join("");
     }
 
-    oj_parseType(options): string {
+    ns_parseType(options): string {
         let name = "";
 
         if (options && options.allowVoid && this.matchKeyword("void")) {
@@ -4008,57 +4008,57 @@ export class Parser {
         }
 
         if (this.match('<')) {
-            name += this.oj_parseTypeAngleSuffix();
+            name += this.ns_parseTypeAngleSuffix();
         }
 
         return name;
     }
 
-    oj_parseParameterType(): Node.OJParameterType {
+    ns_parseParameterType(): Node.NSParameterType {
         const node = this.createNode();
-        return this.finalize(node, new Node.OJParameterType(this.oj_parseType(null)));
+        return this.finalize(node, new Node.NSParameterType(this.ns_parseType(null)));
     }
 
-    oj_parseParameterTypeOrKeyword(keyword): Node.OJParameterType {
+    ns_parseParameterTypeOrKeyword(keyword): Node.NSParameterType {
         const node = this.createNode();
 
         if (this.matchKeyword(keyword)) {
             this.nextToken();
-            return this.finalize(node, new Node.OJParameterType(keyword));
+            return this.finalize(node, new Node.NSParameterType(keyword));
 
         } else {
-            return this.finalize(node, new Node.OJParameterType(this.oj_parseType(null)));
+            return this.finalize(node, new Node.NSParameterType(this.ns_parseType(null)));
         }
     }
 
-    oj_parseMethodSelector(): Node.OJMethodSelector {
+    ns_parseMethodSelector(): Node.NSMethodSelector {
         const node = this.createNode();
 
-        let methodType: Node.OJParameterType | null = null;
+        let methodType: Node.NSParameterType | null = null;
         let variableName: Node.Identifier | null = null;
 
-        let name = this.oj_parseMethodNameSegment();
+        let name = this.ns_parseMethodNameSegment();
 
         if (!this.match('{') && !this.match(';')) {
             this.expect(':');
 
             if (this.match('(')) {
                 this.expect('(');
-                methodType = this.oj_parseParameterType();
+                methodType = this.ns_parseParameterType();
                 this.expect(')');
             }
 
             variableName = this.parseVariableIdentifier();
         }
 
-        return this.finalize(node, new Node.OJMethodSelector(name, methodType, variableName));
+        return this.finalize(node, new Node.NSMethodSelector(name, methodType, variableName));
     }
 
-    oj_parseMethodDefinition(): Node.OJMethodDefinition {
+    ns_parseMethodDefinition(): Node.NSMethodDefinition {
         const node = this.createNode();
-        const methodSelectors: Node.OJMethodSelector[] = []; 
+        const methodSelectors: Node.NSMethodSelector[] = []; 
 
-        let returnType: Node.OJParameterType | null = null;
+        let returnType: Node.NSParameterType | null = null;
         let selectorName = '';
 
         let type = this.match('+') ? '+' : '-';
@@ -4066,12 +4066,12 @@ export class Parser {
 
         if (this.match('(')) {
             this.expect('(');
-            returnType = this.oj_parseParameterTypeOrKeyword('void');
+            returnType = this.ns_parseParameterTypeOrKeyword('void');
             this.expect(')');
         }
 
         while (!this.match('{')) {
-            let methodSelector = this.oj_parseMethodSelector();
+            let methodSelector = this.ns_parseMethodSelector();
 
             selectorName += methodSelector.name.value;
             if (methodSelector.variableName) {
@@ -4089,14 +4089,14 @@ export class Parser {
         const body = this.parseFunctionSourceElements();
         this.context.strict = previousStrict;
 
-        return this.finalize(node, new Node.OJMethodDefinition(type, selectorName, returnType, methodSelectors, body));
+        return this.finalize(node, new Node.NSMethodDefinition(type, selectorName, returnType, methodSelectors, body));
     }
 
-    oj_parseMethodDeclaration(): Node.OJMethodDeclaration {
+    ns_parseMethodDeclaration(): Node.NSMethodDeclaration {
         const node = this.createNode();
-        const methodSelectors: Node.OJMethodSelector[] = []; 
+        const methodSelectors: Node.NSMethodSelector[] = []; 
 
-        let returnType: Node.OJParameterType | null = null;
+        let returnType: Node.NSParameterType | null = null;
         let selectorName = '';
 
         let type = this.match('+') ? '+' : '-';
@@ -4104,12 +4104,12 @@ export class Parser {
 
         if (this.match('(')) {
             this.expect('(');
-            returnType = this.oj_parseParameterTypeOrKeyword('void');
+            returnType = this.ns_parseParameterTypeOrKeyword('void');
             this.expect(')');
         }
 
         while (!this.match(";")) {
-            let methodSelector = this.oj_parseMethodSelector();
+            let methodSelector = this.ns_parseMethodSelector();
 
             selectorName += methodSelector.name.value;
             if (methodSelector.variableName) {
@@ -4127,10 +4127,10 @@ export class Parser {
             this.expect(";");
         }
 
-        return this.finalize(node, new Node.OJMethodDeclaration(type, selectorName, returnType, methodSelectors));
+        return this.finalize(node, new Node.NSMethodDeclaration(type, selectorName, returnType, methodSelectors));
     }    
 
-    oj_parseClassImplementationBody(): Node.BlockStatement {
+    ns_parseClassImplementationBody(): Node.BlockStatement {
         const node = this.createNode();
         const sourceElements: Node.Statement[] = [];
 
@@ -4145,16 +4145,16 @@ export class Parser {
             } else if (token.type === Token.Keyword) {
                 switch (token.value) {
                 case '@property':
-                    sourceElement = this.oj_parsePropertyDirective();
+                    sourceElement = this.ns_parsePropertyDirective();
                     break;
                 case '@observe':
-                    sourceElement = this.oj_parseObserveDirective();
+                    sourceElement = this.ns_parseObserveDirective();
                     break;
                 case '@synthesize':
-                    sourceElement = this.oj_parseSynthesizeDirective();
+                    sourceElement = this.ns_parseSynthesizeDirective();
                     break;
                 case '@dynamic':
-                    sourceElement = this.oj_parseDynamicDirective();
+                    sourceElement = this.ns_parseDynamicDirective();
                     break;
                 default:
                     sourceElement = this.parseStatementListItem();
@@ -4162,7 +4162,7 @@ export class Parser {
                 }
 
             } else if (this.match('-') || this.match('+')) {
-                sourceElement = this.oj_parseMethodDefinition();
+                sourceElement = this.ns_parseMethodDefinition();
             } else {
                 sourceElement = this.parseStatementListItem();
             }
@@ -4177,11 +4177,11 @@ export class Parser {
         return this.finalize(node, new Node.BlockStatement(sourceElements));
     }
 
-    oj_parseInstanceVariableDeclaration(): Node.OJInstanceVariableDeclaration {
+    ns_parseInstanceVariableDeclaration(): Node.NSInstanceVariableDeclaration {
         const node = this.createNode();
         const ivars: Node.Identifier[] = [];
 
-        const parameterType = new Node.OJParameterType(this.oj_parseType(null));
+        const parameterType = new Node.NSParameterType(this.ns_parseType(null));
 
         ivars.push(this.parseVariableIdentifier());
 
@@ -4190,39 +4190,39 @@ export class Parser {
             ivars.push(this.parseVariableIdentifier());
         }
 
-        return this.finalize(node, new Node.OJInstanceVariableDeclaration(parameterType, ivars));
+        return this.finalize(node, new Node.NSInstanceVariableDeclaration(parameterType, ivars));
     }
 
-    oj_parseInstanceVariableDeclarations(): Node.OJInstanceVariableDeclarations {
+    ns_parseInstanceVariableDeclarations(): Node.NSInstanceVariableDeclarations {
         const node = this.createNode();
-        const declarations: Node.OJInstanceVariableDeclaration[] = [];
+        const declarations: Node.NSInstanceVariableDeclaration[] = [];
 
         this.expect('{');
 
         while (!this.match('}')) {
-            declarations.push(this.oj_parseInstanceVariableDeclaration());
+            declarations.push(this.ns_parseInstanceVariableDeclaration());
             this.consumeSemicolon();
         }
 
         this.expect('}');
 
-        return this.finalize(node, new Node.OJInstanceVariableDeclarations(declarations));
+        return this.finalize(node, new Node.NSInstanceVariableDeclarations(declarations));
     }
 
-    oj_parseClassImplementationDefinition(): Node.OJClassImplementation {
+    ns_parseClassImplementationDefinition(): Node.NSClassImplementation {
         const node = this.createNode();
 
         let superClass: Node.Identifier | null = null;
         let extension = false;
         let category: Node.Identifier | null = null;
-        let protocolList: Node.OJProtocolList | null = null;
-        let ivarDeclarations: Node.OJInstanceVariableDeclarations | null = null;
+        let protocolList: Node.NSProtocolList | null = null;
+        let ivarDeclarations: Node.NSInstanceVariableDeclarations | null = null;
 
-        if (this.context.oj_inImplementation) {
-            this.throwError(Messages.OJCannotNestImplementations);
+        if (this.context.ns_inImplementation) {
+            this.throwError(Messages.NSCannotNestImplementations);
         }
 
-        this.context.oj_inImplementation = true;
+        this.context.ns_inImplementation = true;
 
         const oldLabelSet = this.context.labelSet;
         const previousStrict = this.context.strict;
@@ -4255,37 +4255,37 @@ export class Parser {
         }
 
         if (this.match('<')) {
-            protocolList = this.oj_parseProtocolReferenceList();
+            protocolList = this.ns_parseProtocolReferenceList();
         }
 
         // Has ivar declarations
         if (this.match('{')) {
             if (category) this.throwUnexpectedToken();
-            ivarDeclarations = this.oj_parseInstanceVariableDeclarations();
+            ivarDeclarations = this.ns_parseInstanceVariableDeclarations();
         }
 
-        const body = this.oj_parseClassImplementationBody();
+        const body = this.ns_parseClassImplementationBody();
 
         this.expectKeyword('@end');
 
         this.context.strict = previousStrict;
-        this.context.oj_inImplementation = false;
+        this.context.ns_inImplementation = false;
         this.context.labelSet = oldLabelSet;
 
-        return this.finalize(node, new Node.OJClassImplementation(id, superClass, category, extension, protocolList, ivarDeclarations, body));
+        return this.finalize(node, new Node.NSClassImplementation(id, superClass, category, extension, protocolList, ivarDeclarations, body));
     }
 
-    oj_parseProtocolReferenceList(): Node.OJProtocolList {
+    ns_parseProtocolReferenceList(): Node.NSProtocolList {
         var protocolList;
 
         this.expect('<');
-        protocolList = this.oj_parseProtocolList();
+        protocolList = this.ns_parseProtocolList();
         this.expect('>');
 
         return protocolList;
     }
 
-    oj_parseProtocolList(): Node.OJProtocolList {
+    ns_parseProtocolList(): Node.NSProtocolList {
         const node = this.createNode();
         const protocols: Node.Identifier[] = [];
 
@@ -4296,10 +4296,10 @@ export class Parser {
             protocols.push(this.parseVariableIdentifier());
         }
 
-        return this.finalize(node, new Node.OJProtocolList(protocols));
+        return this.finalize(node, new Node.NSProtocolList(protocols));
     }
 
-    oj_parseProtocolDefinitionBody(): Node.BlockStatement {
+    ns_parseProtocolDefinitionBody(): Node.BlockStatement {
         const node = this.createNode();
         const sourceElements: any[] = [];
 
@@ -4321,10 +4321,10 @@ export class Parser {
                 optional = true;
 
             } else if (this.matchKeyword('@property')) {
-                sourceElement = this.oj_parsePropertyDirective();
+                sourceElement = this.ns_parsePropertyDirective();
 
             } else if (this.match('-') || this.match('+')) {
-                sourceElement = this.oj_parseMethodDeclaration();
+                sourceElement = this.ns_parseMethodDeclaration();
 
             } else {
                 this.throwUnexpectedToken(token);
@@ -4339,40 +4339,40 @@ export class Parser {
         return this.finalize(node, new Node.BlockStatement(sourceElements));
     }
 
-    oj_parseProtocolDefinition(): Node.OJProtocolDefinition {
+    ns_parseProtocolDefinition(): Node.NSProtocolDefinition {
         const node = this.createNode();
 
-        var protocolList: Node.OJProtocolList | null = null;
+        var protocolList: Node.NSProtocolList | null = null;
 
-        if (this.context.oj_inImplementation) {
-            this.throwError(Messages.OJCannotNestImplementations);
+        if (this.context.ns_inImplementation) {
+            this.throwError(Messages.NSCannotNestImplementations);
         }
 
         const oldLabelSet = this.context.labelSet;
         const previousStrict = this.context.strict;
         this.context.strict = true;
-        this.context.oj_inImplementation = true;
+        this.context.ns_inImplementation = true;
 
         this.expectKeyword('@protocol');
 
         const id = this.parseVariableIdentifier();
 
         if (this.match('<')) {
-            protocolList = this.oj_parseProtocolReferenceList();
+            protocolList = this.ns_parseProtocolReferenceList();
         }
 
-        const body = this.oj_parseProtocolDefinitionBody();
+        const body = this.ns_parseProtocolDefinitionBody();
 
         this.expectKeyword('@end');
 
         this.context.strict = previousStrict;
-        this.context.oj_inImplementation = false;
+        this.context.ns_inImplementation = false;
         this.context.labelSet = oldLabelSet;
 
-        return this.finalize(node, new Node.OJProtocolDefinition(id, protocolList, body));
+        return this.finalize(node, new Node.NSProtocolDefinition(id, protocolList, body));
     }
 
-    oj_parseForwardDirective(): Node.OJForwardDirective {
+    ns_parseForwardDirective(): Node.NSForwardDirective {
         const node = this.createNode();
         const ids: Node.Identifier[] = [];
 
@@ -4397,10 +4397,10 @@ export class Parser {
 
         this.consumeSemicolon();
 
-        return this.finalize(node, new Node.OJForwardDirective(kind, ids));
+        return this.finalize(node, new Node.NSForwardDirective(kind, ids));
     }
 
-    oj_parseSqueezeDirective(): Node.OJSqueezeDirective {
+    ns_parseSqueezeDirective(): Node.NSSqueezeDirective {
         const node = this.createNode();
         const ids: Node.Identifier[] = [];
 
@@ -4415,10 +4415,10 @@ export class Parser {
 
         this.consumeSemicolon();
 
-        return this.finalize(node, new Node.OJSqueezeDirective(ids));
+        return this.finalize(node, new Node.NSSqueezeDirective(ids));
     }
 
-    oj_parseCastExpression(): Node.OJCastExpression {
+    ns_parseCastExpression(): Node.NSCastExpression {
         const node = this.createNode();
         let id: string;
 
@@ -4426,14 +4426,14 @@ export class Parser {
         if (this.match('<')) {
             this.expect('<');
 
-            id = this.oj_parseType(null);
+            id = this.ns_parseType(null);
             
             this.expect('>');
             this.expect('(');
 
         } else {
             this.expect('(');
-            id = this.oj_parseType(null);
+            id = this.ns_parseType(null);
             this.expect(',');
         }
 
@@ -4441,10 +4441,10 @@ export class Parser {
 
         this.expect(')');
 
-        return this.finalize(node, new Node.OJCastExpression(id, argument));
+        return this.finalize(node, new Node.NSCastExpression(id, argument));
     }
 
-    oj_parseAnyExpression(): Node.OJAnyExpression {
+    ns_parseAnyExpression(): Node.NSAnyExpression {
         const node = this.createNode();
 
         this.expectKeyword('@any');
@@ -4452,10 +4452,10 @@ export class Parser {
         let argument = this.parseExpression();
         this.expect(')');
 
-        return this.finalize(node, new Node.OJAnyExpression(argument));
+        return this.finalize(node, new Node.NSAnyExpression(argument));
     }
 
-    oj_parseMessageReceiver(): Node.Identifier {
+    ns_parseMessageReceiver(): Node.Identifier {
         const node = this.createNode();
         const token = this.nextToken();
 
@@ -4472,14 +4472,14 @@ export class Parser {
         return this.finalize(node, new Node.Identifier(token.value));
     }
 
-    oj_parseArrayInitializerOrMessageExpression() {
+    ns_parseArrayInitializerOrMessageExpression() {
         const node = this.createNode();
         const elements: Node.ArrayExpressionElement[] = [];
 
-        let ojSelectorName: string | null = null;
-        let ojMessageSelectors: Node.OJMessageSelector[] | null = null;
-        let ojReceiver: Node.OJMessageReceiver | null = null;
-        let ojMightBeMessageExpression = true, ojMaybeElement;
+        let nsSelectorName: string | null = null;
+        let nsMessageSelectors: Node.NSMessageSelector[] | null = null;
+        let nsReceiver: Node.NSMessageReceiver | null = null;
+        let nsMightBeMessageExpression = true, nsMaybeElement;
 
         this.expect('[');
 
@@ -4497,38 +4497,38 @@ export class Parser {
                 }
                 elements.push(element);
 
-            } else if (ojMightBeMessageExpression) {
+            } else if (nsMightBeMessageExpression) {
                 if (this.matchKeyword("super")) {
-                    ojMaybeElement = this.oj_parseMessageReceiver();
+                    nsMaybeElement = this.ns_parseMessageReceiver();
                 } else {
-                    ojMaybeElement = this.inheritCoverGrammar(this.parseAssignmentExpression);
-                    ojMightBeMessageExpression = !(this.match(",") || this.match("]"));
+                    nsMaybeElement = this.inheritCoverGrammar(this.parseAssignmentExpression);
+                    nsMightBeMessageExpression = !(this.match(",") || this.match("]"));
                 }
 
-                // At this point, ojMightBeMessageExpression is really "isMessageExpression"
-                if (ojMightBeMessageExpression) {
-                    ojReceiver = new Node.OJMessageReceiver(ojMaybeElement);
-                    if (ojMaybeElement.loc) {
-                        (ojReceiver as any).loc = ojMaybeElement.loc;
+                // At this point, nsMightBeMessageExpression is really "isMessageExpression"
+                if (nsMightBeMessageExpression) {
+                    nsReceiver = new Node.NSMessageReceiver(nsMaybeElement);
+                    if (nsMaybeElement.loc) {
+                        (nsReceiver as any).loc = nsMaybeElement.loc;
                     }
 
-                    ojMessageSelectors = [ ];
-                    ojSelectorName = "";
+                    nsMessageSelectors = [ ];
+                    nsSelectorName = "";
 
                     while (!this.match(']')) {
-                        const ojMessageSelector = this.oj_parseMessageSelector();
-                        ojMessageSelectors.push(ojMessageSelector);
+                        const nsMessageSelector = this.ns_parseMessageSelector();
+                        nsMessageSelectors.push(nsMessageSelector);
 
-                        ojSelectorName += ojMessageSelector.name.value;
-                        if (ojMessageSelector.argument || ojMessageSelector.arguments) {
-                            ojSelectorName += ":";
+                        nsSelectorName += nsMessageSelector.name.value;
+                        if (nsMessageSelector.argument || nsMessageSelector.arguments) {
+                            nsSelectorName += ":";
                         }
                     }
 
                     break;
 
                 } else {
-                    elements.push(ojMaybeElement);
+                    elements.push(nsMaybeElement);
 
                     if (!this.match(']')) {
                         this.expect(',');
@@ -4544,17 +4544,17 @@ export class Parser {
         }
         this.expect(']');
 
-        if (ojMessageSelectors) {
-            return this.finalize(node, new Node.OJMessageExpression(ojReceiver as Node.OJMessageReceiver, ojSelectorName as string, ojMessageSelectors));
+        if (nsMessageSelectors) {
+            return this.finalize(node, new Node.NSMessageExpression(nsReceiver as Node.NSMessageReceiver, nsSelectorName as string, nsMessageSelectors));
         } else {            
             return this.finalize(node, new Node.ArrayExpression(elements));
         }
     }
 
-    oj_parseMessageSelector(): Node.OJMessageSelector {
+    ns_parseMessageSelector(): Node.NSMessageSelector {
         const node = this.createNode();
 
-        let name = this.oj_parseMethodNameSegment();
+        let name = this.ns_parseMethodNameSegment();
 
         let arg:  Node.Expression   | null = null;
         let args: Node.Expression[] | null = null;
@@ -4574,10 +4574,10 @@ export class Parser {
             if (args) args.push(this.parseAssignmentExpression());
         }
 
-        return this.finalize(node, new Node.OJMessageSelector(name, arg, args));
+        return this.finalize(node, new Node.NSMessageSelector(name, arg, args));
     }
 
-    oj_parseConstDeclaration(): Node.OJConstDeclaration {
+    ns_parseConstDeclaration(): Node.NSConstDeclaration {
         const node = this.createNode();
 
         this.expectKeyword("@const");
@@ -4586,10 +4586,10 @@ export class Parser {
 
         this.consumeSemicolon();
 
-        return this.finalize(node, new Node.OJConstDeclaration(declarations));
+        return this.finalize(node, new Node.NSConstDeclaration(declarations));
     }
 
-    oj_parseEnumDeclaration(): Node.VariableDeclarator {
+    ns_parseEnumDeclaration(): Node.VariableDeclarator {
         const node = this.createNode();
         const id = this.parseVariableIdentifier();
 
@@ -4608,7 +4608,7 @@ export class Parser {
         return this.finalize(node, new Node.VariableDeclarator(id, init));
     }
 
-    oj_parseEnumStatement(): Node.OJEnumDeclaration {
+    ns_parseEnumStatement(): Node.NSEnumDeclaration {
         const node = this.createNode();
         const declarations: Node.VariableDeclarator[] = [];
         
@@ -4624,7 +4624,7 @@ export class Parser {
         this.expect("{");
 
         while (!this.match('}')) {
-            declarations.push(this.oj_parseEnumDeclaration());
+            declarations.push(this.ns_parseEnumDeclaration());
             if (!this.match('}')) this.expect(',');
         }
 
@@ -4632,14 +4632,14 @@ export class Parser {
 
         this.consumeSemicolon();
 
-        return this.finalize(node, new Node.OJEnumDeclaration(id, declarations));
+        return this.finalize(node, new Node.NSEnumDeclaration(id, declarations));
     }
 
-    oj_parseTypeDefinition(): Node.OJTypeDefinition {
+    ns_parseTypeDefinition(): Node.NSTypeDefinition {
         const node = this.createNode();
-        const params: Node.OJIdentifierWithAnnotation[] = [];
+        const params: Node.NSIdentifierWithAnnotation[] = [];
 
-        let annotation: Node.OJTypeAnnotation | null = null;
+        let annotation: Node.NSTypeAnnotation | null = null;
         let kind: string = '';
 
         this.expectKeyword('@type');
@@ -4654,9 +4654,9 @@ export class Parser {
 
             while (!this.match('}')) {
                 const paramName = this.parseIdentifierName().name;
-                const paramAnnotation = this.oj_parseTypeAnnotation({ allowOptional: true });
+                const paramAnnotation = this.ns_parseTypeAnnotation({ allowOptional: true });
 
-                params.push(new Node.OJIdentifierWithAnnotation(paramName, paramAnnotation));
+                params.push(new Node.NSIdentifierWithAnnotation(paramName, paramAnnotation));
 
                 if (!this.match('}')) {
                     this.expect(",")
@@ -4671,9 +4671,9 @@ export class Parser {
 
             while (!this.match(']')) {
                 let paramName = "" + params.length;
-                let paramAnnotation = new Node.OJTypeAnnotation(this.oj_parseType(null), false);
+                let paramAnnotation = new Node.NSTypeAnnotation(this.ns_parseType(null), false);
 
-                params.push(new Node.OJIdentifierWithAnnotation(paramName, paramAnnotation));
+                params.push(new Node.NSIdentifierWithAnnotation(paramName, paramAnnotation));
 
                 if (!this.match(']')) {
                     this.expect(',');
@@ -4690,9 +4690,9 @@ export class Parser {
 
             while (!this.match(')')) {
                 let paramName = this.parseVariableIdentifier().name;
-                let paramAnnotation = this.oj_parseTypeAnnotation({ allowOptional: true });
+                let paramAnnotation = this.ns_parseTypeAnnotation({ allowOptional: true });
 
-                params.push(new Node.OJIdentifierWithAnnotation(paramName, paramAnnotation));
+                params.push(new Node.NSIdentifierWithAnnotation(paramName, paramAnnotation));
 
                 if (!this.match(')')) {
                     this.expect(',');
@@ -4700,12 +4700,12 @@ export class Parser {
             }
 
             this.expect(')');
-            annotation = this.oj_parseTypeAnnotation({ allowVoid: true });
+            annotation = this.ns_parseTypeAnnotation({ allowVoid: true });
 
         } else if (this.lookahead.type === Token.Identifier) {
             kind = 'alias';
 
-            annotation = new Node.OJTypeAnnotation(this.oj_parseType(null), false);
+            annotation = new Node.NSTypeAnnotation(this.ns_parseType(null), false);
 
         } else {
             this.throwUnexpectedToken();
@@ -4713,10 +4713,10 @@ export class Parser {
 
         this.consumeSemicolon();
 
-        return this.finalize(node, new Node.OJTypeDefinition(name, kind, params, annotation));
+        return this.finalize(node, new Node.NSTypeDefinition(name, kind, params, annotation));
     }
 
-    oj_parseTypeAnnotation(options): Node.OJTypeAnnotation {
+    ns_parseTypeAnnotation(options): Node.NSTypeAnnotation {
         const node = this.createNode();
         let optional = false;
 
@@ -4728,10 +4728,10 @@ export class Parser {
         }
 
         this.expect(':');
-        return this.finalize(node, new Node.OJTypeAnnotation(this.oj_parseType(options), optional));
+        return this.finalize(node, new Node.NSTypeAnnotation(this.ns_parseType(options), optional));
     }
 
-    oj_parseVariableIdentifierWithOptionalTypeAnnotation(kind?: string): Node.Identifier {
+    ns_parseVariableIdentifierWithOptionalTypeAnnotation(kind?: string): Node.Identifier {
         const node = this.createNode();
         const token = this.nextToken();
 
@@ -4754,13 +4754,13 @@ export class Parser {
         }
 
         if (this.match(':')) {
-            return this.finalize(node, new Node.OJIdentifierWithAnnotation(token.value as string, this.oj_parseTypeAnnotation(null)));
+            return this.finalize(node, new Node.NSIdentifierWithAnnotation(token.value as string, this.ns_parseTypeAnnotation(null)));
         } else {
             return this.finalize(node, new Node.Identifier(token.value));
         }
     }
 
-    oj_parseEachStatement(): Node.OJEachStatement {
+    ns_parseEachStatement(): Node.NSEachStatement {
         const node = this.createNode();
 
         let left;
@@ -4798,42 +4798,42 @@ export class Parser {
 
         this.context.inIteration = oldInIteration;
 
-        return this.finalize(node, new Node.OJEachStatement(left, right, body));
+        return this.finalize(node, new Node.NSEachStatement(left, right, body));
     }
 
-    oj_parseGlobalDeclaration() {
+    ns_parseGlobalDeclaration() {
         const node = this.createNode();
 
         this.expectKeyword('@global');
 
         if (this.matchKeyword("function")) {
             const declaration = this.parseFunctionDeclaration();
-            return this.finalize(node, new Node.OJGlobalDeclaration(declaration as Node.FunctionDeclaration, null));
+            return this.finalize(node, new Node.NSGlobalDeclaration(declaration as Node.FunctionDeclaration, null));
 
         } else {
             const declarators = this.parseBindingList('var', {inFor: false});
-            return this.finalize(node, new Node.OJGlobalDeclaration(null, declarators));
+            return this.finalize(node, new Node.NSGlobalDeclaration(null, declarators));
         }
     }
 
-    oj_parseBridgedDeclaration(): Node.OJBridgedDeclaration {
+    ns_parseBridgedDeclaration(): Node.NSBridgedDeclaration {
         const node = this.createNode();
         let declaration;
 
         this.expectKeyword('@bridged');
 
         if (this.matchKeyword("@const")) {
-            declaration = this.oj_parseConstDeclaration();
+            declaration = this.ns_parseConstDeclaration();
         } else if (this.matchKeyword("@enum")) {
-            declaration = this.oj_parseEnumStatement();
+            declaration = this.ns_parseEnumStatement();
         } else {
             this.throwUnexpectedToken();
         }
 
-        return this.finalize(node, new Node.OJBridgedDeclaration(declaration));
+        return this.finalize(node, new Node.NSBridgedDeclaration(declaration));
     }
 
-//!oj: end changes
+//!ns: end changes
 
 
 }
