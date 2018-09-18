@@ -4366,19 +4366,10 @@ export class Parser {
         let id: string;
 
         this.expectKeyword('@cast');
-        if (this.match('<')) {
-            this.expect('<');
 
-            id = this.ns_parseType(null);
-            
-            this.expect('>');
-            this.expect('(');
-
-        } else {
-            this.expect('(');
-            id = this.ns_parseType(null);
-            this.expect(',');
-        }
+        this.expect('(');
+        id = this.ns_parseType(null);
+        this.expect(',');
 
         let argument = this.parseExpression();
 
