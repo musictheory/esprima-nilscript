@@ -348,7 +348,6 @@ export class Scanner {
                    (id === '@end')            ||
                    (id === '@optional')       ||
                    (id === '@required')       ||
-                   (id === '@forward')        ||
                    (id === '@property')       ||
                    (id === '@synthesize')     ||
                    (id === '@selector')       ||

@@ -2767,9 +2767,6 @@ export class Parser {
                     case '@protocol':
                         statement = this.ns_parseProtocolDefinition();
                         break;
-                    case '@forward':
-                        statement = this.ns_parseForwardDirective();
-                        break;
                     case '@squeeze':
                         statement = this.ns_parseSqueezeDirective();
                         break;
@@ -4365,34 +4362,6 @@ export class Parser {
         this.context.labelSet = oldLabelSet;
 
         return this.finalize(node, new Node.NSProtocolDefinition(id, protocolList, body));
-    }
-
-    ns_parseForwardDirective(): Node.NSForwardDirective {
-        const node = this.createNode();
-        const ids: Node.Identifier[] = [];
-
-        let kind = "class";
-
-        this.expectKeyword('@forward');
-
-        if (this.matchKeyword('@protocol')) {
-            this.expectKeyword('@protocol');
-            kind = "protocol";
-
-        } else if (this.matchKeyword('@class')) {
-            this.expectKeyword('@class');
-        }
-
-        ids.push(this.parseVariableIdentifier());
-
-        while (this.match(',')) {
-            this.expect(',');
-            ids.push(this.parseVariableIdentifier());
-        }
-
-        this.consumeSemicolon();
-
-        return this.finalize(node, new Node.NSForwardDirective(kind, ids));
     }
 
     ns_parseSqueezeDirective(): Node.NSSqueezeDirective {

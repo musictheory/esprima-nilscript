@@ -82,7 +82,6 @@ export const Syntax = {
     NSPropertyDirective: 'NSPropertyDirective',
     NSPropertyAttribute: 'NSPropertyAttribute',
     NSSynthesizeDirective: 'NSSynthesizeDirective',
-    NSForwardDirective: 'NSForwardDirective',
     NSSqueezeDirective: 'NSSqueezeDirective',
     NSSynthesizePair: 'NSSynthesizePair',
     NSDynamicDirective: 'NSDynamicDirective',

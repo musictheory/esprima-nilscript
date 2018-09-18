@@ -1069,17 +1069,6 @@ export class NSSynthesizeDirective {
     }
 }
 
-export class NSForwardDirective {
-    readonly type: string;
-    readonly kind: string;
-    readonly ids: Identifier[];
-    constructor (kind: string, ids: Identifier[]) {
-        this.type = Syntax.NSForwardDirective;
-        this.kind = kind;
-        this.ids = ids;
-    }
-}
-
 export class NSSqueezeDirective {
     readonly type: string;
     readonly ids: Identifier[];
