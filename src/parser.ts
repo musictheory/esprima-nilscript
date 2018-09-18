@@ -2767,9 +2767,6 @@ export class Parser {
                     case '@protocol':
                         statement = this.ns_parseProtocolDefinition();
                         break;
-                    case '@squeeze':
-                        statement = this.ns_parseSqueezeDirective();
-                        break;
                     case '@bridged':
                         statement = this.ns_parseBridgedDeclaration();
                         break;
@@ -4362,24 +4359,6 @@ export class Parser {
         this.context.labelSet = oldLabelSet;
 
         return this.finalize(node, new Node.NSProtocolDefinition(id, protocolList, body));
-    }
-
-    ns_parseSqueezeDirective(): Node.NSSqueezeDirective {
-        const node = this.createNode();
-        const ids: Node.Identifier[] = [];
-
-        this.expectKeyword('@squeeze');
-
-        ids.push(this.parseVariableIdentifier());
-
-        while (this.match(',')) {
-            this.expect(',');
-            ids.push(this.parseVariableIdentifier());
-        }
-
-        this.consumeSemicolon();
-
-        return this.finalize(node, new Node.NSSqueezeDirective(ids));
     }
 
     ns_parseCastExpression(): Node.NSCastExpression {

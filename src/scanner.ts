@@ -354,7 +354,6 @@ export class Scanner {
                    (id === '@dynamic')        ||
                    (id === '@enum')           ||
                    (id === '@const')          ||
-                   (id === '@squeeze')        ||
                    (id === '@cast')           ||
                    (id === '@any')            ||
                    (id === '@each')           ||

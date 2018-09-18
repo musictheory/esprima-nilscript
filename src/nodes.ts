@@ -1069,15 +1069,6 @@ export class NSSynthesizeDirective {
     }
 }
 
-export class NSSqueezeDirective {
-    readonly type: string;
-    readonly ids: Identifier[];
-    constructor (ids: Identifier[]) {
-        this.type = Syntax.NSSqueezeDirective;
-        this.ids = ids;
-    }
-}
-
 export class NSSynthesizePair {
     readonly type: string;
     readonly id: Identifier;
