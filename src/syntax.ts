@@ -87,7 +87,6 @@ export const Syntax = {
     NSSelectorDirective: 'NSSelectorDirective',
     NSConstDeclaration: 'NSConstDeclaration',
     NSEnumDeclaration: 'NSEnumDeclaration',
-    NSStructDefinition: 'NSStructDefinition',
     NSProtocolDefinition: 'NSProtocolDefinition',
     NSProtocolList: 'NSProtocolList',
     NSMethodDeclaration: 'NSMethodDeclaration',
