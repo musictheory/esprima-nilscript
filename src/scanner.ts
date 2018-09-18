@@ -343,12 +343,11 @@ export class Scanner {
     private isKeyword(id: string): boolean {
         //!ns: start changes
         if (id[0] === '@') {
-            return (id === '@end')            ||
-                   (id === '@implementation') ||
+            return (id === '@class')          ||
                    (id === '@protocol')       ||
+                   (id === '@end')            ||
                    (id === '@optional')       ||
                    (id === '@required')       ||
-                   (id === '@class')          ||
                    (id === '@forward')        ||
                    (id === '@property')       ||
                    (id === '@synthesize')     ||

@@ -2762,7 +2762,6 @@ export class Parser {
                         break;
 //!ns: Start changes
                     case '@class':
-                    case '@implementation':
                         statement = this.ns_parseClassImplementationDefinition();
                         break;
                     case '@protocol':
@@ -4228,11 +4227,7 @@ export class Parser {
         const previousStrict = this.context.strict;
         this.context.strict = true;
 
-        if (this.matchKeyword('@class')) {
-            this.expectKeyword('@class');
-        } else {
-            this.expectKeyword('@implementation');
-        }
+        this.expectKeyword('@class');
 
         const id = this.parseVariableIdentifier();
 
