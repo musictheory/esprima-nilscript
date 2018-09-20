@@ -3767,21 +3767,9 @@ export class Parser {
 
         let selector: Node.NSSelector | null = null;
 
-        // See ParseObjc.cpp in LLVM clang
-        const allowedNames = [
-            'class',
-            'copy',
-            'readonly',
-            'readwrite',
-            'struct'
-        ];
-
         if (name == 'getter' || name == 'setter') {
             this.expect('=');
             selector = this.ns_parseSelector(true);
-
-        } else if (allowedNames.indexOf(name) < 0) {
-            this.throwUnexpectedToken(startToken);
         }
 
         return this.finalize(node, new Node.NSPropertyAttribute(name, selector));
