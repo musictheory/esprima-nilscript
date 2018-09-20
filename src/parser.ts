@@ -3769,22 +3769,11 @@ export class Parser {
 
         // See ParseObjc.cpp in LLVM clang
         const allowedNames = [
-            'assign',
-            'atomic',
             'class',
             'copy',
-            'nonatomic',
-            'nonnull',
-            'null_resettable',
-            'null_unspecified',
-            'nullable',
             'readonly',
             'readwrite',
-            'retain',
-            'strong',
-            'struct',
-            'unsafe_unretained',
-            'weak'
+            'struct'
         ];
 
         if (name == 'getter' || name == 'setter') {
