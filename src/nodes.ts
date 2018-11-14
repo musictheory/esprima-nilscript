@@ -930,20 +930,26 @@ export class NSClassImplementation {
     readonly type: string;
     readonly id: Identifier;
     readonly body: BlockStatement;
-    readonly superClass: Identifier | null;
+    readonly inheritanceList: NSInheritanceList | null;
     readonly category: Identifier | null;
-    readonly extension: boolean;
-    readonly protocolList: NSProtocolList | null;
     readonly ivarDeclarations: NSInstanceVariableDeclarations | null;
-    constructor(id: Identifier, superClass: Identifier | null, category: Identifier | null, extension: boolean, protocolList:  NSProtocolList | null, ivarDeclarations: NSInstanceVariableDeclarations | null, body: BlockStatement) {
+    constructor(id: Identifier, inheritanceList: NSInheritanceList | null, category: Identifier | null, ivarDeclarations: NSInstanceVariableDeclarations | null, body: BlockStatement) {
         this.type = Syntax.NSClassImplementation;
         this.id   = id;
         this.body = body;
-        this.superClass = superClass;
+        this.inheritanceList = inheritanceList;
         this.category = category;
-        this.extension = extension;
-        this.protocolList = protocolList;
         this.ivarDeclarations = ivarDeclarations;
+    }
+}
+
+export class NSInheritanceList {
+    readonly type: string;
+    readonly ids: Identifier[];
+
+    constructor(ids: Identifier[]) {
+        this.type = Syntax.NSInheritanceList;
+        this.ids = ids;
     }
 }
 
@@ -998,21 +1004,10 @@ export class NSParameterType {
 
 export class NSInstanceVariableDeclarations {
     readonly type: string;
-    readonly declarations: NSInstanceVariableDeclaration[];
-    constructor (declarations: NSInstanceVariableDeclaration[]) {
+    readonly declarations: NSIdentifierWithAnnotation[];
+    constructor (declarations: NSIdentifierWithAnnotation[]) {
         this.type = Syntax.NSInstanceVariableDeclarations;
         this.declarations = declarations;
-    }
-}
-
-export class NSInstanceVariableDeclaration {
-    readonly type: string;
-    readonly parameterType: NSParameterType;
-    readonly ivars: Identifier[];
-    constructor (parameterType: NSParameterType, ivars: Identifier[]) {
-        this.type = Syntax.NSInstanceVariableDeclaration;
-        this.parameterType = parameterType;
-        this.ivars = ivars;
     }
 }
 
@@ -1118,24 +1113,15 @@ export class NSEnumDeclaration {
     }
 }
 
-export class NSProtocolList {
-    readonly type: string;
-    readonly protocols: Identifier[];
-    constructor (protocols: Identifier[]) {
-        this.type = Syntax.NSProtocolList;
-        this.protocols = protocols;
-    }
-}
-
 export class NSProtocolDefinition {
     readonly type: string;
     readonly id: Identifier;
-    readonly protocolList: NSProtocolList | null;
+    readonly inheritanceList: NSInheritanceList | null;
     readonly body: BlockStatement;
-    constructor (id: Identifier, protocolList: NSProtocolList | null, body: BlockStatement) {
+    constructor (id: Identifier, inheritanceList: NSInheritanceList | null, body: BlockStatement) {
         this.type = Syntax.NSProtocolDefinition;
         this.id = id;
-        this.protocolList = protocolList;
+        this.inheritanceList = inheritanceList;
         this.body = body;
     }
 }

@@ -291,6 +291,78 @@
 	},
 	"buffers":
 	[
+		{
+			"file": "Project.sublime-project",
+			"settings":
+			{
+				"buffer_size": 435,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "Searching 30 files for \"\"use stric\" (regex, case sensitive)\n\n0 matches\n\nSearching 30 files for \"use strict\" (regex, case sensitive)\n\n/Users/iccir/Projects/esprima-nilscript/src/messages.ts:\n   19      IllegalExportDeclaration: 'Unexpected token',\n   20      IllegalImportDeclaration: 'Unexpected token',\n   21:     IllegalLanguageModeDirective: 'Illegal \\'use strict\\' directive in function with non-simple parameter list',\n   22      IllegalReturn: 'Illegal return statement',\n   23      InvalidEscapedReservedWord: 'Keyword must not contain escaped characters',\n\n/Users/iccir/Projects/esprima-nilscript/src/parser.ts:\n 3113              }\n 3114  \n 3115:             if (directive === 'use strict') {\n 3116                  this.context.strict = true;\n 3117                  if (firstRestricted) {\n\n2 matches across 2 files\n\n\nSearching 30 files for \"StrictOctalLiteral\" (regex, case sensitive)\n\n/Users/iccir/Projects/esprima-nilscript/src/messages.ts:\n   46      StrictLHSPrefix: 'Prefix increment/decrement may not have eval or arguments operand in strict mode',\n   47      StrictModeWith: 'Strict mode code may not include a with statement',\n   48:     StrictOctalLiteral: 'Octal literals are not allowed in strict mode.',\n   49      StrictParamDupe: 'Strict mode function may not have duplicate parameter names',\n   50      StrictParamName: 'Parameter name eval or arguments is not allowed in strict mode',\n\n/Users/iccir/Projects/esprima-nilscript/src/parser.ts:\n  620              case Token.StringLiteral:\n  621                  if (this.context.strict && this.lookahead.octal) {\n  622:                     this.tolerateUnexpectedToken(this.lookahead, Messages.StrictOctalLiteral);\n  623                  }\n  624                  this.context.isAssignmentTarget = false;\n  ...\n  806              case Token.NumericLiteral:\n  807                  if (this.context.strict && token.octal) {\n  808:                     this.tolerateUnexpectedToken(token, Messages.StrictOctalLiteral);\n  809                  }\n  810                  const raw = this.getTokenRaw(token);\n  ...\n 3117                  this.context.strict = true;\n 3118                  if (firstRestricted) {\n 3119:                     this.tolerateUnexpectedToken(firstRestricted, Messages.StrictOctalLiteral);\n 3120                  }\n 3121                  if (!this.context.allowStrictDirective) {\n\n4 matches across 2 files\n\n\nSearching 30 files for \"@protocol\" (regex, case sensitive)\n\n/Users/iccir/Projects/esprima-nilscript/src/parser.ts:\n 2770                          statement = this.ns_parseClassImplementationDefinition();\n 2771                          break;\n 2772:                     case '@protocol':\n 2773                          if (!this.context.nilscript) this.throwUnexpectedToken(this.lookahead);\n 2774                          statement = this.ns_parseProtocolDefinition();\n ....\n 4363          this.context.inNilscriptClass = true;\n 4364  \n 4365:         this.expectKeyword('@protocol');\n 4366  \n 4367          const id = this.parseVariableIdentifier();\n\n/Users/iccir/Projects/esprima-nilscript/src/scanner.ts:\n  345          if (id[0] === '@') {\n  346              return (id === '@class')          ||\n  347:                    (id === '@protocol')       ||\n  348                     (id === '@end')            ||\n  349                     (id === '@optional')       ||\n\n3 matches across 2 files\n",
+			"settings":
+			{
+				"buffer_size": 3388,
+				"line_ending": "Unix",
+				"name": "Find Results",
+				"scratch": true
+			}
+		},
+		{
+			"file": "src/parser.ts",
+			"settings":
+			{
+				"buffer_size": 172242,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/tokenizer.ts",
+			"settings":
+			{
+				"buffer_size": 6625,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/character.ts",
+			"settings":
+			{
+				"buffer_size": 17229,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/messages.ts",
+			"settings":
+			{
+				"buffer_size": 4277,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/scanner.ts",
+			"settings":
+			{
+				"buffer_size": 43974,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/syntax.ts",
+			"settings":
+			{
+				"buffer_size": 4200,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		}
 	],
 	"build_system": "",
 	"build_system_choices":
@@ -328,17 +400,19 @@
 	},
 	"expanded_folders":
 	[
-		"/Users/iccir/Projects/esprima-nilscript"
+		"/Users/iccir/Projects/esprima-nilscript",
+		"/Users/iccir/Projects/esprima-nilscript/src"
 	],
 	"file_history":
 	[
-		"/Users/iccir/Projects/esprima-nilscript/src/scanner.js",
+		"/Users/iccir/Projects/esprima-nilscript/src/esprima.ts",
 		"/Users/iccir/Projects/esprima-nilscript/src/parser.ts",
-		"/Users/iccir/Projects/esprima-nilscript/src/parser.js",
-		"/Users/iccir/Projects/esprima-nilscript/src/nodes.ts",
 		"/Users/iccir/Projects/esprima-nilscript/src/syntax.ts",
-		"/Users/iccir/Projects/esprima-nilscript/src/nodes.js",
+		"/Users/iccir/Projects/esprima-nilscript/src/nodes.ts",
 		"/Users/iccir/Projects/esprima-nilscript/src/messages.ts",
+		"/Users/iccir/Projects/esprima-nilscript/src/scanner.js",
+		"/Users/iccir/Projects/esprima-nilscript/src/parser.js",
+		"/Users/iccir/Projects/esprima-nilscript/src/nodes.js",
 		"/Users/iccir/Projects/esprima-nilscript/src/messages.js",
 		"/Users/iccir/Projects/esprima-nilscript/src/character.ts",
 		"/Users/iccir/Projects/esprima-nilscript/dist/esprima.js",
@@ -458,18 +532,18 @@
 		"/Users/iccir/Projects/Theory/Web/CoreTenuto/Exercise Base/DebugReport.oj",
 		"/Users/iccir/Projects/Theory/Web/CoreLessons/Phrases and Cadences/lesson55.json",
 		"/Users/iccir/Projects/Theory/Web/CoreTenuto/Other/WebStringReader.oj",
-		"/Users/iccir/Projects/Theory/Web/CoreTenuto/Exercise Concrete/NoteEarTrainingExercise.oj",
-		"/Users/iccir/Projects/Theory/Web/CoreLessons/Seventh Chords/lesson45.json"
+		"/Users/iccir/Projects/Theory/Web/CoreTenuto/Exercise Concrete/NoteEarTrainingExercise.oj"
 	],
 	"find":
 	{
-		"height": 26.0
+		"height": 33.0
 	},
 	"find_in_files":
 	{
 		"height": 91.0,
 		"where_history":
 		[
+			""
 		]
 	},
 	"find_state":
@@ -477,6 +551,112 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			",",
+			"type",
+			"matchContextualKeyword",
+			"matchAsyncFunction",
+			"parseLabelledStatement",
+			"matchKeyword",
+			"parseLabelledStatement",
+			"parseClassDeclaration",
+			"ClassDecl",
+			"@observe",
+			"@protocol",
+			"?\\n",
+			"isolateCoverGrammar",
+			"parseWhileStatement",
+			"@class",
+			"ns_",
+			"parseExpression",
+			"parseExpressionStatement",
+			"ns_parseClassImplementationDefinition",
+			"@class",
+			"ns_parseClassImplementationDefinition",
+			"lookahead",
+			"throwUnexpectedToken",
+			"ns_parseClassImplementationDefinition",
+			"allowStrictDirective",
+			"nilscript",
+			"inNilscriptClass",
+			"nilscript",
+			"allowStrictDirective",
+			"StrictOctalLiteral",
+			"firstRestricted",
+			"nilscript",
+			".strict =",
+			".strict = ",
+			"strict",
+			"nilscript",
+			"strict",
+			"nilscript",
+			"previousStrict",
+			"Context",
+			"isAssignmentTarget",
+			"const previous",
+			"previousIsBindingElement",
+			"const previous",
+			"strict",
+			"strict =",
+			"strict",
+			"previous",
+			"context",
+			"previous",
+			".strict",
+			"strict",
+			"previousStrict",
+			"strict",
+			"firstRestricted",
+			"tolerateUnexpectedToken",
+			"strict",
+			"!ns: ",
+			"allowNilscript",
+			"inNilscriptClass",
+			"nilscriptInClass",
+			"ns_inImplementation",
+			"context",
+			"use strict",
+			"\"use stric",
+			"// (c) 2011-2018 musictheory.net, LLC.  All rights reserved.\n\n(function() { \"use strict\";",
+			"NSObserveDirective",
+			"NSSelectorDirective",
+			"NSStructDefinition",
+			"canonicalize",
+			"cast",
+			"@cast<",
+			"@cast",
+			"ueeze",
+			"ns_parseSqueezeDirective",
+			"squeeze",
+			"orward",
+			"ns_parseForwardDirective",
+			"NSForwardDirective",
+			"ns_parseForwardDirective",
+			"forward",
+			"@implementation",
+			"mangle",
+			"nilscript_",
+			"ns_init",
+			"version",
+			"4.0.0-dev",
+			"4.0",
+			"ojMaybeElement",
+			"ojMay",
+			"nsMaybeElement",
+			"!nilscript",
+			"nilscript_in",
+			"oj_in",
+			"esprima",
+			"typescript",
+			"oj",
+			"oj_",
+			"oj_inImplementation",
+			"oj_",
+			"oj_inImplementation",
+			"oj",
+			"OJ",
+			"oj",
+			"OJ([A-Z])",
+			"!oj"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -484,6 +664,9 @@
 		"regex": true,
 		"replace_history":
 		[
+			"!ns",
+			"ns_",
+			"NS$1"
 		],
 		"reverse": false,
 		"show_context": true,
@@ -494,8 +677,321 @@
 	"groups":
 	[
 		{
+			"selected": 0,
 			"sheets":
 			[
+				{
+					"buffer": 0,
+					"file": "Project.sublime-project",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 435,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								256,
+								256
+							]
+						],
+						"settings":
+						{
+							"git_savvy.repo_path": "/Users/iccir/Projects/esprima-nilscript",
+							"syntax": "Packages/JavaScript/JSON.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3388,
+						"regions":
+						{
+							"match":
+							{
+								"flags": 112,
+								"regions":
+								[
+									[
+										356,
+										366
+									],
+									[
+										687,
+										697
+									],
+									[
+										1156,
+										1174
+									],
+									[
+										1667,
+										1685
+									],
+									[
+										1966,
+										1984
+									],
+									[
+										2257,
+										2275
+									],
+									[
+										2671,
+										2680
+									],
+									[
+										2966,
+										2975
+									],
+									[
+										3229,
+										3238
+									]
+								],
+								"scope": ""
+							}
+						},
+						"selection":
+						[
+							[
+								3232,
+								3232
+							]
+						],
+						"settings":
+						{
+							"detect_indentation": false,
+							"line_numbers": false,
+							"output_tag": 4,
+							"result_base_dir": "",
+							"result_file_regex": "^([^ \t].*):$",
+							"result_line_regex": "^ +([0-9]+):",
+							"scroll_past_end": true,
+							"syntax": "Packages/Default/Find Results.hidden-tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 901.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "src/parser.ts",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 172242,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								172242,
+								172242
+							]
+						],
+						"settings":
+						{
+							"git_savvy.repo_path": "/Users/iccir/Projects/esprima-nilscript",
+							"syntax": "Packages/TypeScript/TypeScript.tmLanguage",
+							"typescript_plugin_format_options":
+							{
+								"convertTabsToSpaces": true,
+								"indentSize": 4,
+								"tabSize": 4
+							},
+							"use_tab_stops": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 80591.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "src/tokenizer.ts",
+					"semi_transient": true,
+					"settings":
+					{
+						"buffer_size": 6625,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"git_savvy.repo_path": "/Users/iccir/Projects/esprima-nilscript",
+							"syntax": "Packages/TypeScript/TypeScript.tmLanguage",
+							"typescript_plugin_format_options":
+							{
+								"convertTabsToSpaces": true,
+								"indentSize": 4,
+								"tabSize": 4
+							},
+							"use_tab_stops": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "src/character.ts",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 17229,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"git_savvy.repo_path": "/Users/iccir/Projects/esprima-nilscript",
+							"syntax": "Packages/TypeScript/TypeScript.tmLanguage",
+							"use_tab_stops": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 7,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "src/messages.ts",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 4277,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"git_savvy.repo_path": "/Users/iccir/Projects/esprima-nilscript",
+							"syntax": "Packages/TypeScript/TypeScript.tmLanguage",
+							"use_tab_stops": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 6,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "src/scanner.ts",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 43974,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								11209,
+								11217
+							]
+						],
+						"settings":
+						{
+							"git_savvy.repo_path": "/Users/iccir/Projects/esprima-nilscript",
+							"syntax": "Packages/TypeScript/TypeScript.tmLanguage",
+							"typescript_plugin_format_options":
+							{
+								"convertTabsToSpaces": true,
+								"indentSize": 4,
+								"tabSize": 4
+							},
+							"use_tab_stops": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 5436.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"file": "src/syntax.ts",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 4200,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								4090,
+								4108
+							]
+						],
+						"settings":
+						{
+							"git_savvy.repo_path": "/Users/iccir/Projects/esprima-nilscript",
+							"syntax": "Packages/TypeScript/TypeScript.tmLanguage",
+							"typescript_plugin_format_options":
+							{
+								"convertTabsToSpaces": true,
+								"indentSize": 4,
+								"tabSize": 4
+							},
+							"use_tab_stops": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 861.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				}
 			]
 		}
 	],
@@ -546,7 +1042,7 @@
 	"project": "Project.sublime-project",
 	"replace":
 	{
-		"height": 48.0
+		"height": 62.0
 	},
 	"save_all_on_build": true,
 	"select_file":

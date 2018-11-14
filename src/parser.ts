@@ -61,6 +61,16 @@ interface TokenEntry {
     loc?: SourceLocation;
 }
 
+//!ns: start changes
+
+interface NSParseTypeOptions {
+    allowOptional?: boolean;
+    allowVoid?: boolean;
+}
+
+//!ns: end changes
+
+
 export class Parser {
     readonly config: Config;
     readonly delegate: any;
@@ -3795,15 +3805,11 @@ export class Parser {
             this.expect(')');
         }
 
-        const annotation = new Node.NSTypeAnnotation(this.ns_parseType(null), false);
-
-        let name = this.parseVariableIdentifier().name;
-
-        const id = new Node.NSIdentifierWithAnnotation(name, annotation);
+        const identifier = this.ns_parseIdentifierWithAnnotation();
 
         this.consumeSemicolon();
 
-        return this.finalize(node, new Node.NSPropertyDirective(id, attributes));
+        return this.finalize(node, new Node.NSPropertyDirective(identifier, attributes));
     }
 
     ns_parseObserveAttribute(): Node.NSObserveAttribute {
@@ -3967,7 +3973,7 @@ export class Parser {
         return parts.join("");
     }
 
-    ns_parseType(options): string {
+    ns_parseType(options?: NSParseTypeOptions): string {
         let name = "";
 
         if (options && options.allowVoid && this.matchKeyword("void")) {
@@ -3986,7 +3992,7 @@ export class Parser {
 
     ns_parseParameterType(): Node.NSParameterType {
         const node = this.createNode();
-        return this.finalize(node, new Node.NSParameterType(this.ns_parseType(null)));
+        return this.finalize(node, new Node.NSParameterType(this.ns_parseType()));
     }
 
     ns_parseParameterTypeOrKeyword(keyword): Node.NSParameterType {
@@ -3997,7 +4003,7 @@ export class Parser {
             return this.finalize(node, new Node.NSParameterType(keyword));
 
         } else {
-            return this.finalize(node, new Node.NSParameterType(this.ns_parseType(null)));
+            return this.finalize(node, new Node.NSParameterType(this.ns_parseType()));
         }
     }
 
@@ -4147,30 +4153,20 @@ export class Parser {
         return this.finalize(node, new Node.BlockStatement(sourceElements));
     }
 
-    ns_parseInstanceVariableDeclaration(): Node.NSInstanceVariableDeclaration {
-        const node = this.createNode();
-        const ivars: Node.Identifier[] = [];
-
-        const parameterType = new Node.NSParameterType(this.ns_parseType(null));
-
-        ivars.push(this.parseVariableIdentifier());
-
-        while (this.match(',')) {
-            this.expect(',');
-            ivars.push(this.parseVariableIdentifier());
-        }
-
-        return this.finalize(node, new Node.NSInstanceVariableDeclaration(parameterType, ivars));
-    }
-
     ns_parseInstanceVariableDeclarations(): Node.NSInstanceVariableDeclarations {
         const node = this.createNode();
-        const declarations: Node.NSInstanceVariableDeclaration[] = [];
+        const declarations: Node.NSIdentifierWithAnnotation[] = [];
 
         this.expect('{');
 
         while (!this.match('}')) {
-            declarations.push(this.ns_parseInstanceVariableDeclaration());
+            declarations.push(this.ns_parseIdentifierWithAnnotation());
+
+            if (this.match(',')) {
+                this.expect(',');
+                continue;
+            }
+
             this.consumeSemicolon();
         }
 
@@ -4182,10 +4178,9 @@ export class Parser {
     ns_parseClassImplementationDefinition(): Node.NSClassImplementation {
         const node = this.createNode();
 
-        let superClass: Node.Identifier | null = null;
+        let inheritanceList: Node.NSInheritanceList | null = null;
         let extension = false;
         let category: Node.Identifier | null = null;
-        let protocolList: Node.NSProtocolList | null = null;
         let ivarDeclarations: Node.NSInstanceVariableDeclarations | null = null;
 
         if (this.context.ns_inImplementation) {
@@ -4202,26 +4197,15 @@ export class Parser {
 
         const id = this.parseVariableIdentifier();
 
-        // Has superclass
+        // Has inheritance list
         if (this.match(':')) {
-            this.expect(':');
-            superClass = this.parseVariableIdentifier();
-        }
+            inheritanceList = this.ns_parseInheritanceList();
 
-        if (this.match('(')) {
+        // Category on existing class
+        } else if (this.match('(')) {
             this.expect('(');
-
-            if (this.match(')')) {
-                extension = true;
-            } else {
-                category = this.parseVariableIdentifier();
-            }
-
+            category = this.parseVariableIdentifier();
             this.expect(')');
-        }
-
-        if (this.match('<')) {
-            protocolList = this.ns_parseProtocolReferenceList();
         }
 
         // Has ivar declarations
@@ -4238,31 +4222,23 @@ export class Parser {
         this.context.ns_inImplementation = false;
         this.context.labelSet = oldLabelSet;
 
-        return this.finalize(node, new Node.NSClassImplementation(id, superClass, category, extension, protocolList, ivarDeclarations, body));
+        return this.finalize(node, new Node.NSClassImplementation(id, inheritanceList, category, ivarDeclarations, body));
     }
 
-    ns_parseProtocolReferenceList(): Node.NSProtocolList {
-        var protocolList;
-
-        this.expect('<');
-        protocolList = this.ns_parseProtocolList();
-        this.expect('>');
-
-        return protocolList;
-    }
-
-    ns_parseProtocolList(): Node.NSProtocolList {
+    ns_parseInheritanceList(): Node.NSInheritanceList {
         const node = this.createNode();
-        const protocols: Node.Identifier[] = [];
+        const ids: Node.Identifier[] = [];
 
-        protocols.push(this.parseVariableIdentifier());
+        this.expect(':');
+
+        ids.push(this.parseVariableIdentifier());
 
         while (this.match(',')) {
             this.expect(',');
-            protocols.push(this.parseVariableIdentifier());
+            ids.push(this.parseVariableIdentifier());
         }
 
-        return this.finalize(node, new Node.NSProtocolList(protocols));
+        return this.finalize(node, new Node.NSInheritanceList(ids));
     }
 
     ns_parseProtocolDefinitionBody(): Node.BlockStatement {
@@ -4308,7 +4284,7 @@ export class Parser {
     ns_parseProtocolDefinition(): Node.NSProtocolDefinition {
         const node = this.createNode();
 
-        var protocolList: Node.NSProtocolList | null = null;
+        var inheritanceList: Node.NSInheritanceList | null = null;
 
         if (this.context.ns_inImplementation) {
             this.throwError(Messages.NSCannotNestImplementations);
@@ -4323,8 +4299,8 @@ export class Parser {
 
         const id = this.parseVariableIdentifier();
 
-        if (this.match('<')) {
-            protocolList = this.ns_parseProtocolReferenceList();
+        if (this.match(':')) {
+            inheritanceList = this.ns_parseInheritanceList();
         }
 
         const body = this.ns_parseProtocolDefinitionBody();
@@ -4335,7 +4311,7 @@ export class Parser {
         this.context.ns_inImplementation = false;
         this.context.labelSet = oldLabelSet;
 
-        return this.finalize(node, new Node.NSProtocolDefinition(id, protocolList, body));
+        return this.finalize(node, new Node.NSProtocolDefinition(id, inheritanceList, body));
     }
 
     ns_parseCastExpression(): Node.NSCastExpression {
@@ -4345,7 +4321,7 @@ export class Parser {
         this.expectKeyword('@cast');
 
         this.expect('(');
-        id = this.ns_parseType(null);
+        id = this.ns_parseType();
         this.expect(',');
 
         let argument = this.parseExpression();
@@ -4556,7 +4532,10 @@ export class Parser {
         this.expectKeyword('@type');
 
         let name = this.parseVariableIdentifier().name;
-        this.expect("=");
+
+        if (this.match('=')) {
+            this.expect('=');
+        }
 
         if (this.match('{')) {
             kind = 'object';
@@ -4564,13 +4543,14 @@ export class Parser {
             this.expect('{');
 
             while (!this.match('}')) {
-                const paramName = this.parseIdentifierName().name;
-                const paramAnnotation = this.ns_parseTypeAnnotation({ allowOptional: true });
-
-                params.push(new Node.NSIdentifierWithAnnotation(paramName, paramAnnotation));
+                params.push(this.ns_parseIdentifierWithAnnotation({ allowOptional: true }));
 
                 if (!this.match('}')) {
-                    this.expect(",")
+                    if (this.match(';')) {
+                        this.expect(';');
+                    } else {
+                        this.expect(",");
+                    }
                 }
             }
 
@@ -4582,7 +4562,7 @@ export class Parser {
 
             while (!this.match(']')) {
                 let paramName = "" + params.length;
-                let paramAnnotation = new Node.NSTypeAnnotation(this.ns_parseType(null), false);
+                let paramAnnotation = new Node.NSTypeAnnotation(this.ns_parseType(), false);
 
                 params.push(new Node.NSIdentifierWithAnnotation(paramName, paramAnnotation));
 
@@ -4600,10 +4580,7 @@ export class Parser {
             this.expect('(')
 
             while (!this.match(')')) {
-                let paramName = this.parseVariableIdentifier().name;
-                let paramAnnotation = this.ns_parseTypeAnnotation({ allowOptional: true });
-
-                params.push(new Node.NSIdentifierWithAnnotation(paramName, paramAnnotation));
+                params.push(this.ns_parseIdentifierWithAnnotation({ allowOptional: true }));
 
                 if (!this.match(')')) {
                     this.expect(',');
@@ -4616,7 +4593,7 @@ export class Parser {
         } else if (this.lookahead.type === Token.Identifier) {
             kind = 'alias';
 
-            annotation = new Node.NSTypeAnnotation(this.ns_parseType(null), false);
+            annotation = new Node.NSTypeAnnotation(this.ns_parseType(), false);
 
         } else {
             this.throwUnexpectedToken();
@@ -4627,7 +4604,7 @@ export class Parser {
         return this.finalize(node, new Node.NSTypeDefinition(name, kind, params, annotation));
     }
 
-    ns_parseTypeAnnotation(options): Node.NSTypeAnnotation {
+    ns_parseTypeAnnotation(options?: NSParseTypeOptions): Node.NSTypeAnnotation {
         const node = this.createNode();
         let optional = false;
 
@@ -4640,6 +4617,16 @@ export class Parser {
 
         this.expect(':');
         return this.finalize(node, new Node.NSTypeAnnotation(this.ns_parseType(options), optional));
+    }
+
+    ns_parseIdentifierWithAnnotation(options?: NSParseTypeOptions): Node.NSIdentifierWithAnnotation
+    {
+        const node = this.createNode();
+
+        const name = this.parseIdentifierName().name;
+        const annotation = this.ns_parseTypeAnnotation(options);
+
+        return this.finalize(node, new Node.NSIdentifierWithAnnotation(name, annotation));
     }
 
     ns_parseVariableIdentifierWithOptionalTypeAnnotation(kind?: string): Node.Identifier {
@@ -4665,7 +4652,7 @@ export class Parser {
         }
 
         if (this.match(':')) {
-            return this.finalize(node, new Node.NSIdentifierWithAnnotation(token.value as string, this.ns_parseTypeAnnotation(null)));
+            return this.finalize(node, new Node.NSIdentifierWithAnnotation(token.value as string, this.ns_parseTypeAnnotation()));
         } else {
             return this.finalize(node, new Node.Identifier(token.value));
         }
