@@ -1038,6 +1038,21 @@ export class Parser {
     parseGroupExpression(): ArrowParameterPlaceHolderNode | Node.Expression {
         let expr;
 
+//!ns: Start changes
+        let colonToken : RawToken | null = null;
+
+        const parseAssignmentExpressionAndMaybeAnnotation = () => {
+            let expr = this.inheritCoverGrammar(this.parseAssignmentExpression);
+
+            if (expr.type === Syntax.Identifier && this.match(':')) {
+                if (!colonToken) colonToken = this.lookahead;
+                expr.annotation = this.ns_parseTypeAnnotation();
+            }
+
+            return expr;
+        };
+//!ns: End changes
+
         this.expect('(');
         if (this.match(')')) {
             this.nextToken();
@@ -1066,8 +1081,7 @@ export class Parser {
             } else {
                 let arrow = false;
                 this.context.isBindingElement = true;
-                expr = this.inheritCoverGrammar(this.parseAssignmentExpression);
-
+                expr = parseAssignmentExpressionAndMaybeAnnotation(); //!ns: Change to our local function
                 if (this.match(',')) {
                     const expressions: Node.Expression[] = [];
 
@@ -1109,7 +1123,7 @@ export class Parser {
                                 async: false
                             };
                         } else {
-                            expressions.push(this.inheritCoverGrammar(this.parseAssignmentExpression));
+                            expressions.push(parseAssignmentExpressionAndMaybeAnnotation()); //!ns: Change to our local function
                         }
                         if (arrow) {
                             break;
@@ -1156,7 +1170,7 @@ export class Parser {
                 }
             }
         }
-
+        if (expr.type !== ArrowParameterPlaceHolder && colonToken) this.throwUnexpectedToken(colonToken); //!ns: Throw if not => placeholder
         return expr;
     }
 
