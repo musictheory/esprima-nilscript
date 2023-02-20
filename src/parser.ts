@@ -4763,7 +4763,7 @@ export class Parser {
                     this.throwUnexpectedToken(token);
                 }
             }
-        } else if ((this.context.isModule || this.context.await) && token.type === Token.Identifier && token.value === 'await') {
+        } else if ((this.context.isModule || this.context.isAsync) && token.type === Token.Identifier && token.value === 'await') {
             this.tolerateUnexpectedToken(token);
         }
 
