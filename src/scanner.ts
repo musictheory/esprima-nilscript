@@ -349,9 +349,7 @@ export class Scanner {
                    (id === '@optional')       ||
                    (id === '@required')       ||
                    (id === '@property')       ||
-                   (id === '@synthesize')     ||
                    (id === '@selector')       ||
-                   (id === '@dynamic')        ||
                    (id === '@enum')           ||
                    (id === '@const')          ||
                    (id === '@cast')           ||

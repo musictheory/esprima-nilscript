@@ -932,14 +932,12 @@ export class NSClassImplementation {
     readonly body: BlockStatement;
     readonly inheritanceList: NSInheritanceList | null;
     readonly category: Identifier | null;
-    readonly ivarDeclarations: NSInstanceVariableDeclarations | null;
-    constructor(id: Identifier, inheritanceList: NSInheritanceList | null, category: Identifier | null, ivarDeclarations: NSInstanceVariableDeclarations | null, body: BlockStatement) {
+    constructor(id: Identifier, inheritanceList: NSInheritanceList | null, category: Identifier | null, body: BlockStatement) {
         this.type = Syntax.NSClassImplementation;
         this.id   = id;
         this.body = body;
         this.inheritanceList = inheritanceList;
         this.category = category;
-        this.ivarDeclarations = ivarDeclarations;
     }
 }
 
@@ -1002,15 +1000,6 @@ export class NSParameterType {
     }
 }
 
-export class NSInstanceVariableDeclarations {
-    readonly type: string;
-    readonly declarations: NSIdentifierWithAnnotation[];
-    constructor (declarations: NSIdentifierWithAnnotation[]) {
-        this.type = Syntax.NSInstanceVariableDeclarations;
-        this.declarations = declarations;
-    }
-}
-
 export class NSPropertyDirective {
     readonly type: string;
     readonly id: NSIdentifierWithAnnotation;
@@ -1052,35 +1041,6 @@ export class NSObserveAttribute {
         this.type = Syntax.NSObserveAttribute;
         this.name = name;
         this.selector = selector;
-    }
-}
-
-export class NSSynthesizeDirective {
-    readonly type: string;
-    readonly pairs: NSSynthesizePair[];
-    constructor (pairs: NSSynthesizePair[]) {
-        this.type = Syntax.NSSynthesizeDirective;
-        this.pairs = pairs;
-    }
-}
-
-export class NSSynthesizePair {
-    readonly type: string;
-    readonly id: Identifier;
-    readonly backing: Identifier | null;
-    constructor (id: Identifier, backing: Identifier | null) {
-        this.type = Syntax.NSSynthesizePair;
-        this.id = id;
-        this.backing = backing;
-    }
-}
-
-export class NSDynamicDirective {
-    readonly type: string;
-    readonly ids: Identifier[];
-    constructor (ids: Identifier[]) {
-        this.type = Syntax.NSDynamicDirective;
-        this.ids = ids;
     }
 }
 

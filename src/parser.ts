@@ -3787,7 +3787,7 @@ export class Parser {
         const node = this.createNode();
 
         const startToken = this.lookahead;
-        let name = this.parseVariableIdentifier().name;
+        let name = this.parseIdentifierName().name;
 
         let selector: Node.NSSelector | null = null;
 
@@ -3875,56 +3875,6 @@ export class Parser {
         this.consumeSemicolon();
 
         return this.finalize(node, new Node.NSObserveDirective(ids, attributes));
-    }
-
-    ns_parseSynthesizePair(): Node.NSSynthesizePair {
-        const node = this.createNode();
-
-        let id = this.parseVariableIdentifier();
-        let backing: Node.Identifier | null = null;
-
-        if (this.match('=')) {
-            this.expect('=');
-            backing = this.parseVariableIdentifier();
-        }
-
-        return this.finalize(node, new Node.NSSynthesizePair(id, backing));
-    }
-    
-    ns_parseSynthesizeDirective(): Node.NSSynthesizeDirective {
-        const node = this.createNode();
-        const pairs: Node.NSSynthesizePair[] = [];
-
-        this.expectKeyword('@synthesize');
-
-        pairs.push(this.ns_parseSynthesizePair());
-
-        while (this.match(',')) {
-            this.expect(',');
-            pairs.push(this.ns_parseSynthesizePair());
-        }
-
-        this.consumeSemicolon();
-
-        return this.finalize(node, new Node.NSSynthesizeDirective(pairs));
-    }
-
-    ns_parseDynamicDirective(): Node.NSDynamicDirective {
-        const node = this.createNode();
-        const ids: Node.Identifier[] = [];
-
-        this.expectKeyword('@dynamic');
-
-        ids.push(this.parseVariableIdentifier());
-
-        while (this.match(',')) {
-            this.expect(',');
-            ids.push(this.parseVariableIdentifier());
-        }
-
-        this.consumeSemicolon();
-
-        return this.finalize(node, new Node.NSDynamicDirective(ids));
     }
 
     // This should be called when lookahead is a '<' token.
@@ -4140,12 +4090,6 @@ export class Parser {
                 case '@observe':
                     sourceElement = this.ns_parseObserveDirective();
                     break;
-                case '@synthesize':
-                    sourceElement = this.ns_parseSynthesizeDirective();
-                    break;
-                case '@dynamic':
-                    sourceElement = this.ns_parseDynamicDirective();
-                    break;
                 default:
                     sourceElement = this.parseStatementListItem();
                     break;
@@ -4167,35 +4111,12 @@ export class Parser {
         return this.finalize(node, new Node.BlockStatement(sourceElements));
     }
 
-    ns_parseInstanceVariableDeclarations(): Node.NSInstanceVariableDeclarations {
-        const node = this.createNode();
-        const declarations: Node.NSIdentifierWithAnnotation[] = [];
-
-        this.expect('{');
-
-        while (!this.match('}')) {
-            declarations.push(this.ns_parseIdentifierWithAnnotation());
-
-            if (this.match(',')) {
-                this.expect(',');
-                continue;
-            }
-
-            this.consumeSemicolon();
-        }
-
-        this.expect('}');
-
-        return this.finalize(node, new Node.NSInstanceVariableDeclarations(declarations));
-    }
-
     ns_parseClassImplementationDefinition(): Node.NSClassImplementation {
         const node = this.createNode();
 
         let inheritanceList: Node.NSInheritanceList | null = null;
         let extension = false;
         let category: Node.Identifier | null = null;
-        let ivarDeclarations: Node.NSInstanceVariableDeclarations | null = null;
 
         if (this.context.ns_inImplementation) {
             this.throwError(Messages.NSCannotNestImplementations);
@@ -4222,12 +4143,6 @@ export class Parser {
             this.expect(')');
         }
 
-        // Has ivar declarations
-        if (this.match('{')) {
-            if (category) this.throwUnexpectedToken();
-            ivarDeclarations = this.ns_parseInstanceVariableDeclarations();
-        }
-
         const body = this.ns_parseClassImplementationBody();
 
         this.expectKeyword('@end');
@@ -4236,7 +4151,7 @@ export class Parser {
         this.context.ns_inImplementation = false;
         this.context.labelSet = oldLabelSet;
 
-        return this.finalize(node, new Node.NSClassImplementation(id, inheritanceList, category, ivarDeclarations, body));
+        return this.finalize(node, new Node.NSClassImplementation(id, inheritanceList, category, body));
     }
 
     ns_parseInheritanceList(): Node.NSInheritanceList {
