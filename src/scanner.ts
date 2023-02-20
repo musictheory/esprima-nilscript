@@ -30,6 +30,9 @@ export interface Comment {
     loc: SourceLocation;
 }
 
+// See: https://tc39.es/ecma262/#prod-NotEscapeSequence
+type NotEscapeSequenceHead = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | 'x' | 'u';
+
 export interface RawToken {
     type: Token;
     value: string | number;
@@ -37,7 +40,8 @@ export interface RawToken {
     flags?: string;
     regex?: RegExp | null;
     octal?: boolean;
-    cooked?: string;
+    cooked?: string | null;
+    notEscapeSequenceHead?: NotEscapeSequenceHead | null;
     head?: boolean;
     tail?: boolean;
     lineNumber: number;
@@ -50,6 +54,7 @@ interface ScannerState {
     index: number;
     lineNumber: number;
     lineStart: number;
+    curlyStack: string[];
 }
 
 export class Scanner {
@@ -57,11 +62,12 @@ export class Scanner {
     readonly source: string;
     readonly errorHandler: ErrorHandler;
     trackComment: boolean;
+    isModule: boolean;
 
     index: number;
     lineNumber: number;
     lineStart: number;
-    private curlyStack: string[];
+    curlyStack: string[];
 
     private readonly length: number;
 
@@ -69,6 +75,7 @@ export class Scanner {
         this.source = code;
         this.errorHandler = handler;
         this.trackComment = false;
+        this.isModule = false;
 
         this.length = code.length;
         this.index = 0;
@@ -81,7 +88,8 @@ export class Scanner {
         return {
             index: this.index,
             lineNumber: this.lineNumber,
-            lineStart: this.lineStart
+            lineStart: this.lineStart,
+            curlyStack: this.curlyStack.slice()
         };
     }
 
@@ -89,6 +97,7 @@ export class Scanner {
         this.index = state.index;
         this.lineNumber = state.lineNumber;
         this.lineStart = state.lineStart;
+        this.curlyStack = state.curlyStack;
     }
 
     public eof(): boolean {
@@ -285,7 +294,7 @@ export class Scanner {
                 } else {
                     break;
                 }
-            } else if (ch === 0x3C) { // U+003C is '<'
+            } else if (ch === 0x3C && !this.isModule) { // U+003C is '<'
                 if (this.source.slice(this.index + 1, this.index + 4) === '!--') {
                     this.index += 4; // `<!--`
                     const comment = this.skipSingleLineComment(4);
@@ -417,13 +426,13 @@ export class Scanner {
         return String.fromCharCode(code);
     }
 
-    private scanUnicodeCodePointEscape(): string {
+    private tryToScanUnicodeCodePointEscape(): string | null {
         let ch = this.source[this.index];
         let code = 0;
 
         // At least, one hex digit is required.
         if (ch === '}') {
-            this.throwUnexpectedToken();
+            return null;
         }
 
         while (!this.eof()) {
@@ -435,10 +444,18 @@ export class Scanner {
         }
 
         if (code > 0x10FFFF || ch !== '}') {
-            this.throwUnexpectedToken();
+            return null;
         }
 
         return Character.fromCodePoint(code);
+    }
+
+    private scanUnicodeCodePointEscape(): string {
+        const result = this.tryToScanUnicodeCodePointEscape();
+        if (result === null) {
+            return this.throwUnexpectedToken();
+        }
+        return result;
     }
 
     private getIdentifier(): string {
@@ -612,13 +629,26 @@ export class Scanner {
                 ++this.index;
                 this.curlyStack.pop();
                 break;
+
+            case '?':
+                ++this.index;
+                if (this.source[this.index] === '?') {
+                    ++this.index;
+                    str = '??';
+                } if (this.source[this.index] === '.' && !/^\d$/.test(this.source[this.index + 1])) {
+                    // "?." in "foo?.3:0" should not be treated as optional chaining.
+                    // See https://github.com/tc39/proposal-optional-chaining#notes
+                    ++this.index;
+                    str = '?.';
+                }
+                break;
+
             case ')':
             case ';':
             case ',':
             case '[':
             case ']':
             case ':':
-            case '?':
             case '~':
                 ++this.index;
                 break;
@@ -639,11 +669,14 @@ export class Scanner {
 
                         // 2-character punctuators.
                         str = str.substr(0, 2);
-                        if (str === '&&' || str === '||' || str === '==' || str === '!=' ||
+                        if (str === '&&' || str === '||' || str === '??' ||
+                            str === '==' || str === '!=' ||
                             str === '+=' || str === '-=' || str === '*=' || str === '/=' ||
-                            str === '++' || str === '--' || str === '<<' || str === '>>' ||
+                            str === '++' || str === '--' ||
+                            str === '<<' || str === '>>' ||
                             str === '&=' || str === '|=' || str === '^=' || str === '%=' ||
-                            str === '<=' || str === '>=' || str === '=>' || str === '**') {
+                            str === '<=' || str === '>=' || str === '=>' ||
+                            str === '**') {
                             this.index += 2;
                         } else {
 
@@ -896,11 +929,11 @@ export class Scanner {
                                 ++this.index;
                                 str += this.scanUnicodeCodePointEscape();
                             } else {
-                                const unescaped = this.scanHexEscape(ch);
-                                if (unescaped === null) {
+                                const unescapedChar = this.scanHexEscape(ch);
+                                if (unescapedChar === null) {
                                     this.throwUnexpectedToken();
                                 }
-                                str += unescaped;
+                                str += unescapedChar;
                             }
                             break;
                         case 'x':
@@ -984,6 +1017,7 @@ export class Scanner {
 
         const head = (this.source[start] === '`');
         let tail = false;
+        let notEscapeSequenceHead: NotEscapeSequenceHead | null = null;
         let rawOffset = 2;
 
         ++this.index;
@@ -1003,6 +1037,8 @@ export class Scanner {
                     break;
                 }
                 cooked += ch;
+            } else if (notEscapeSequenceHead !== null) {
+                continue;
             } else if (ch === '\\') {
                 ch = this.source[this.index++];
                 if (!Character.isLineTerminator(ch.charCodeAt(0))) {
@@ -1019,24 +1055,28 @@ export class Scanner {
                         case 'u':
                             if (this.source[this.index] === '{') {
                                 ++this.index;
-                                cooked += this.scanUnicodeCodePointEscape();
-                            } else {
-                                const restore = this.index;
-                                const unescaped = this.scanHexEscape(ch);
-                                if (unescaped !== null) {
-                                    cooked += unescaped;
+                                const unicodeCodePointEscape = this.tryToScanUnicodeCodePointEscape();
+                                if (unicodeCodePointEscape === null) {
+                                    notEscapeSequenceHead = 'u';
                                 } else {
-                                    this.index = restore;
-                                    cooked += ch;
+                                    cooked += unicodeCodePointEscape;
+                                }
+                            } else {
+                                const unescapedChar = this.scanHexEscape(ch);
+                                if (unescapedChar === null) {
+                                    notEscapeSequenceHead = 'u';
+                                } else {
+                                    cooked += unescapedChar;
                                 }
                             }
                             break;
                         case 'x':
                             const unescaped = this.scanHexEscape(ch);
                             if (unescaped === null) {
-                                this.throwUnexpectedToken(Messages.InvalidHexEscapeSequence);
+                                notEscapeSequenceHead = 'x';
+                            } else {
+                                cooked += unescaped;
                             }
-                            cooked += unescaped;
                             break;
                         case 'b':
                             cooked += '\b';
@@ -1051,13 +1091,14 @@ export class Scanner {
                         default:
                             if (ch === '0') {
                                 if (Character.isDecimalDigit(this.source.charCodeAt(this.index))) {
-                                    // Illegal: \01 \02 and so on
-                                    this.throwUnexpectedToken(Messages.TemplateOctalLiteral);
+                                    // NotEscapeSequence: \01 \02 and so on
+                                    notEscapeSequenceHead = '0';
+                                } else {
+                                    cooked += '\0';
                                 }
-                                cooked += '\0';
-                            } else if (Character.isOctalDigit(ch.charCodeAt(0))) {
-                                // Illegal: \1 \2
-                                this.throwUnexpectedToken(Messages.TemplateOctalLiteral);
+                            } else if (Character.isDecimalDigitChar(ch)) {
+                                // NotEscapeSequence: \1 \2
+                                notEscapeSequenceHead = ch;
                             } else {
                                 cooked += ch;
                             }
@@ -1093,9 +1134,10 @@ export class Scanner {
         return {
             type: Token.Template,
             value: this.source.slice(start + 1, this.index - rawOffset),
-            cooked: cooked,
+            cooked: notEscapeSequenceHead === null ? cooked : null,
             head: head,
             tail: tail,
+            notEscapeSequenceHead: notEscapeSequenceHead,
             lineNumber: this.lineNumber,
             lineStart: this.lineStart,
             start: start,
@@ -1114,7 +1156,6 @@ export class Scanner {
         // pattern that would not be detected by this substitution.
         const astralSubstitute = '\uFFFF';
         let tmp = pattern;
-        const self = this;
 
         if (flags.indexOf('u') >= 0) {
             tmp = tmp
@@ -1125,7 +1166,7 @@ export class Scanner {
                 .replace(/\\u\{([0-9a-fA-F]+)\}|\\u([a-fA-F0-9]{4})/g, ($0, $1, $2) => {
                     const codePoint = parseInt($1 || $2, 16);
                     if (codePoint > 0x10FFFF) {
-                        self.throwUnexpectedToken(Messages.InvalidRegExp);
+                        this.throwUnexpectedToken(Messages.InvalidRegExp);
                     }
                     if (codePoint <= 0xFFFF) {
                         return String.fromCharCode(codePoint);
@@ -1136,8 +1177,8 @@ export class Scanner {
                 // avoid throwing on regular expressions that are only valid in
                 // combination with the "u" flag.
                 .replace(
-                /[\uD800-\uDBFF][\uDC00-\uDFFF]/g,
-                astralSubstitute
+                    /[\uD800-\uDBFF][\uDC00-\uDFFF]/g,
+                    astralSubstitute
                 );
         }
 

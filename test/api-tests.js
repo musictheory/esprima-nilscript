@@ -40,6 +40,7 @@ describe('esprima.Syntax', function () {
             BreakStatement: 'BreakStatement',
             CallExpression: 'CallExpression',
             CatchClause: 'CatchClause',
+            ChainExpression: 'ChainExpression',
             ClassBody: 'ClassBody',
             ClassDeclaration: 'ClassDeclaration',
             ClassExpression: 'ClassExpression',
@@ -259,6 +260,32 @@ describe('esprima.parse', function () {
         assert.deepEqual(expression.openingElement.type, 'JSXOpeningElement');
         assert.deepEqual(expression.openingElement.name, { type: 'JSXIdentifier', name: 'title' });
         assert.deepEqual(expression.closingElement, null);
+    });
+
+    it('should understand JSX fragment', function () {
+        assert.doesNotThrow(function () {
+            esprima.parse('<></>', { jsx: true });
+        });
+    });
+
+    it('should understand JSX fragment syntax', function () {
+        var ast = esprima.parse('<></>', { jsx: true });
+        var statement = ast.body[0];
+        var expression = statement.expression;
+
+        assert.deepEqual(expression.type, 'JSXElement');
+        assert.deepEqual(expression.openingElement.type, 'JSXOpeningFragment');
+        assert.deepEqual(expression.closingElement.type, 'JSXClosingFragment');
+    });
+
+    it('should understand JSX fragment syntax', function () {
+        var ast = esprima.parse('<></>', { jsx: true });
+        var statement = ast.body[0];
+        var expression = statement.expression;
+
+        assert.deepEqual(expression.type, 'JSXElement');
+        assert.deepEqual(expression.openingElement.type, 'JSXOpeningFragment');
+        assert.deepEqual(expression.closingElement.type, 'JSXClosingFragment');
     });
 
     it('should never produce shallow copied nodes', function () {

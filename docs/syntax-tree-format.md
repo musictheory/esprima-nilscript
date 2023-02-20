@@ -156,9 +156,9 @@ where
 ```js
 interface Property {
     type: 'Property';
-    key: Identifier | Literal;
+    key: Expression;
     computed: boolean;
-    value: AssignmentPattern | Identifier | BindingPattern | FunctionExpression | null;
+    value: Expression | null;
     kind: 'get' | 'set' | 'init';
     method: false;
     shorthand: boolean;
@@ -190,7 +190,7 @@ The value of `generator` is true for a generator expression.
 ### Arrow Function Expression
 
 ```js
-interface FunctionExpression {
+interface ArrowFunctionExpression {
     type: 'ArrowFunctionExpression';
     id: Identifier | null;
     params: FunctionParameter[];
@@ -209,6 +209,7 @@ interface ClassExpression {
     id: Identifier | null;
     superClass: Identifier | null;
     body: ClassBody;
+}
 ```
 
 with
@@ -376,8 +377,8 @@ interface LogicalExpression {
 interface ConditionalExpression {
     type: 'ConditionalExpression';
     test: Expression;
-    consequent: Statement;
-    alternate?: Statement;
+    consequent: Expression;
+    alternate: Expression;
 }
 ```
 
@@ -533,7 +534,7 @@ interface ForStatement {
 ```js
 interface ForInStatement {
     type: 'ForInStatement';
-    left: Expression;
+    left: Expression | VariableDeclaration;
     right: Expression;
     body: Statement;
     each: false;
@@ -545,7 +546,8 @@ interface ForInStatement {
 ```js
 interface ForOfStatement {
     type: 'ForOfStatement';
-    left: Expression;
+    await: boolean;
+    left: Expression | VariableDeclaration;
     right: Expression;
     body: Statement;
 }
@@ -618,7 +620,7 @@ with
 ```js
 interface SwitchCase {
     type: 'SwitchCase';
-    test: Expression;
+    test: Expression | null;
     consequent: Statement[];
 }
 ```
