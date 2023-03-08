@@ -30,7 +30,6 @@ interface Context {
     inClassConstructor: boolean;
     labelSet: any;
     strict: boolean;
-    ns_inImplementation: boolean; //!ns: Add ns_inImplementation
 }
 
 export interface Marker {
@@ -167,8 +166,7 @@ export class Parser {
             inSwitch: false,
             inClassConstructor: false,
             labelSet: {},
-            strict: false,
-            ns_inImplementation: false //!ns: Add ns_inImplementation
+            strict: false
         };
         this.tokens = [];
 
@@ -3908,7 +3906,7 @@ export class Parser {
     ns_parseMethodNameSegment(): Node.NSMethodNameSegment {
         const node = this.createNode();
 
-        var token, value, keyword;
+        let token, value, keyword;
 
         token = this.nextToken();
 
@@ -4238,12 +4236,6 @@ export class Parser {
 
         let inheritanceList: Node.NSInheritanceList | null = null;
 
-        if (this.context.ns_inImplementation) {
-            this.throwError(Messages.NSCannotNestImplementations);
-        }
-
-        this.context.ns_inImplementation = true;
-
         const oldLabelSet = this.context.labelSet;
         const previousStrict = this.context.strict;
         this.context.strict = true;
@@ -4262,7 +4254,6 @@ export class Parser {
         this.expectKeyword('@end');
 
         this.context.strict = previousStrict;
-        this.context.ns_inImplementation = false;
         this.context.labelSet = oldLabelSet;
 
         return this.finalize(node, new Node.NSClassImplementation(id, inheritanceList, body));
@@ -4327,16 +4318,11 @@ export class Parser {
     ns_parseProtocolDefinition(): Node.NSProtocolDefinition {
         const node = this.createNode();
 
-        var inheritanceList: Node.NSInheritanceList | null = null;
-
-        if (this.context.ns_inImplementation) {
-            this.throwError(Messages.NSCannotNestImplementations);
-        }
+        let inheritanceList: Node.NSInheritanceList | null = null;
 
         const oldLabelSet = this.context.labelSet;
         const previousStrict = this.context.strict;
         this.context.strict = true;
-        this.context.ns_inImplementation = true;
 
         this.expectKeyword('@protocol');
 
@@ -4351,7 +4337,6 @@ export class Parser {
         this.expectKeyword('@end');
 
         this.context.strict = previousStrict;
-        this.context.ns_inImplementation = false;
         this.context.labelSet = oldLabelSet;
 
         return this.finalize(node, new Node.NSProtocolDefinition(id, inheritanceList, body));
