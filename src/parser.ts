@@ -2971,9 +2971,6 @@ export class Parser {
                     case '@enum':
                         statement = this.ns_parseEnumStatement();
                         break;
-                    case '@each':
-                        statement = this.ns_parseEachStatement();
-                        break;
                     case '@global':
                         statement = this.ns_parseGlobalDeclaration();
                         break;
@@ -3978,7 +3975,7 @@ export class Parser {
 
         let selector: Node.NSSelector | null = null;
 
-        if (name == 'getter' || name == 'setter') {
+        if (name == 'getter' || name == 'setter' || name == 'change') {
             this.expect('=');
             selector = this.ns_parseSelector(true);
         }
@@ -4011,57 +4008,6 @@ export class Parser {
         this.consumeSemicolon();
 
         return this.finalize(node, new Node.NSPropertyDirective(identifier, attributes));
-    }
-
-    ns_parseObserveAttribute(): Node.NSObserveAttribute {
-        const node = this.createNode();
-
-        const startToken = this.lookahead;
-        let name = this.parseVariableIdentifier().name;
-
-        let selector: Node.NSSelector | null = null;
-
-        const allowedNames = [ 'change', 'set' ];
-
-        if (name == 'before' || name == 'after') {
-            this.expect('=');
-            selector = this.ns_parseSelector(true);
-
-        } else if (allowedNames.indexOf(name) < 0) {
-            this.throwUnexpectedToken(startToken);
-        }
-
-        return this.finalize(node, new Node.NSObserveAttribute(name, selector));
-    }
-
-    ns_parseObserveDirective(): Node.NSObserveDirective {
-        const node = this.createNode();
-        const attributes: Node.NSObserveAttribute[] = [];
-        const ids: Node.Identifier[] = [];
-
-        this.expectKeyword('@observe');
-
-        this.expect('(');
-
-        attributes.push(this.ns_parseObserveAttribute());
-
-        while (this.match(',')) {
-            this.expect(',');
-            attributes.push(this.ns_parseObserveAttribute());
-        }
-
-        this.expect(')');
-
-        ids.push(this.parseVariableIdentifier());
-
-        while (this.match(',')) {
-            this.expect(',');
-            ids.push(this.parseVariableIdentifier());
-        }
-
-        this.consumeSemicolon();
-
-        return this.finalize(node, new Node.NSObserveDirective(ids, attributes));
     }
 
     // This should be called when lookahead is a '<' token.
@@ -4261,7 +4207,7 @@ export class Parser {
         const node = this.createNode();
         const sourceElements: Node.Statement[] = [];
 
-        var sourceElement;
+        let sourceElement;
 
         while (true) {
             const token = this.lookahead;
@@ -4269,30 +4215,19 @@ export class Parser {
             if (this.matchKeyword('@end')) {
                 break; 
 
-            } else if (token.type === Token.Keyword) {
-                switch (token.value) {
-                case '@property':
-                    sourceElement = this.ns_parsePropertyDirective();
-                    break;
-                case '@observe':
-                    sourceElement = this.ns_parseObserveDirective();
-                    break;
-                default:
-                    sourceElement = this.parseStatementListItem();
-                    break;
-                }
+            } else if (this.matchKeyword('@property')) {
+                sourceElement = this.ns_parsePropertyDirective();
 
             } else if (this.match('-') || this.match('+')) {
                 sourceElement = this.ns_parseMethodDefinition();
+
             } else {
-                sourceElement = this.parseStatementListItem();
+                this.throwUnexpectedToken(token);
             }
 
-            if (typeof sourceElement === 'undefined') {
-                break;
+            if (sourceElement) {
+                sourceElements.push(sourceElement);
             }
-
-            sourceElements.push(sourceElement);
         }
 
         return this.finalize(node, new Node.BlockStatement(sourceElements));
@@ -4302,8 +4237,6 @@ export class Parser {
         const node = this.createNode();
 
         let inheritanceList: Node.NSInheritanceList | null = null;
-        let extension = false;
-        let category: Node.Identifier | null = null;
 
         if (this.context.ns_inImplementation) {
             this.throwError(Messages.NSCannotNestImplementations);
@@ -4322,12 +4255,6 @@ export class Parser {
         // Has inheritance list
         if (this.match(':')) {
             inheritanceList = this.ns_parseInheritanceList();
-
-        // Category on existing class
-        } else if (this.match('(')) {
-            this.expect('(');
-            category = this.parseVariableIdentifier();
-            this.expect(')');
         }
 
         const body = this.ns_parseClassImplementationBody();
@@ -4338,7 +4265,7 @@ export class Parser {
         this.context.ns_inImplementation = false;
         this.context.labelSet = oldLabelSet;
 
-        return this.finalize(node, new Node.NSClassImplementation(id, inheritanceList, category, body));
+        return this.finalize(node, new Node.NSClassImplementation(id, inheritanceList, body));
     }
 
     ns_parseInheritanceList(): Node.NSInheritanceList {
@@ -4772,47 +4699,6 @@ export class Parser {
         } else {
             return this.finalize(node, new Node.Identifier(token.value));
         }
-    }
-
-    ns_parseEachStatement(): Node.NSEachStatement {
-        const node = this.createNode();
-
-        let left;
-
-        this.expectKeyword('@each');
-
-        this.expect('(');
-
-        if (this.matchKeyword('var') || this.matchKeyword('let')) {
-            const marker = this.createNode();
-            const kind = this.nextToken().value as string;
-
-            const previousAllowIn = this.context.allowIn;
-            this.context.allowIn = false;
-
-            const declarations = this.parseBindingList(kind, { inFor: false });
-
-            left = this.finalize(marker, new Node.VariableDeclaration(declarations, kind));
-
-            this.context.allowIn = previousAllowIn;
-
-        } else {
-            left = this.parseVariableIdentifier();
-        }
-
-        this.expectKeyword('in');
-        const right = this.parseExpression();
-
-        this.expect(')');
-
-        const oldInIteration = this.context.inIteration;
-        this.context.inIteration = true;
-
-        const body = this.parseStatement();
-
-        this.context.inIteration = oldInIteration;
-
-        return this.finalize(node, new Node.NSEachStatement(left, right, body));
     }
 
     ns_parseGlobalDeclaration() {

@@ -366,8 +366,7 @@ export class Scanner {
                    (id === '@each')           ||
                    (id === '@global')         ||
                    (id === '@type')           ||
-                   (id === '@bridged')        ||
-                   (id === '@observe');
+                   (id === '@bridged');
         }
         //!ns: end changes
 

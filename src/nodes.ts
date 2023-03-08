@@ -947,13 +947,11 @@ export class NSClassImplementation {
     readonly id: Identifier;
     readonly body: BlockStatement;
     readonly inheritanceList: NSInheritanceList | null;
-    readonly category: Identifier | null;
-    constructor(id: Identifier, inheritanceList: NSInheritanceList | null, category: Identifier | null, body: BlockStatement) {
+    constructor(id: Identifier, inheritanceList: NSInheritanceList | null, body: BlockStatement) {
         this.type = Syntax.NSClassImplementation;
         this.id   = id;
         this.body = body;
         this.inheritanceList = inheritanceList;
-        this.category = category;
     }
 }
 
@@ -1033,28 +1031,6 @@ export class NSPropertyAttribute {
     readonly selector: NSSelector | null;
     constructor(name: string, selector: NSSelector | null) {
         this.type = Syntax.NSPropertyAttribute;
-        this.name = name;
-        this.selector = selector;
-    }
-}
-
-export class NSObserveDirective {
-    readonly type: string;
-    readonly ids: Identifier[];
-    readonly attributes: NSObserveAttribute[];
-    constructor (ids: Identifier[], attributes: NSObserveAttribute[]) {
-        this.type = Syntax.NSObserveDirective;
-        this.ids = ids;
-        this.attributes = attributes;
-    }
-}
-
-export class NSObserveAttribute {
-    readonly type: string;
-    readonly name: string;
-    readonly selector: NSSelector | null;
-    constructor (name: string, selector: NSSelector | null) {
-        this.type = Syntax.NSObserveAttribute;
         this.name = name;
         this.selector = selector;
     }
@@ -1162,19 +1138,6 @@ export class NSTypeDefinition {
         this.kind = kind;
         this.params = params;
         this.annotation = annotation;
-    }
-}
-
-export class NSEachStatement {
-    readonly type: string;
-    readonly left: VariableDeclaration | Identifier;
-    readonly right: Expression;
-    readonly body: Statement;
-    constructor (left: VariableDeclaration | Identifier, right: Expression, body: Statement) {
-        this.type = Syntax.NSEachStatement;
-        this.left = left;
-        this.right = right;
-        this.body = body;
     }
 }
 

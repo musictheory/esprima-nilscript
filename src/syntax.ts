@@ -89,11 +89,8 @@ export const Syntax = {
     NSAnyExpression: 'NSAnyExpression',
     NSCastExpression: 'NSCastExpression',
     NSTypeAnnotation: 'NSTypeAnnotation',
-    NSEachStatement: 'NSEachStatement',
     NSGlobalDeclaration: 'NSGlobalDeclaration',
     NSBridgedDeclaration: 'NSBridgedDeclaration',
-    NSTypeDefinition: 'NSTypeDefinition',
-    NSObserveDirective: 'NSObserveDirective',
-    NSObserveAttribute:  'NSObserveAttribute'
+    NSTypeDefinition: 'NSTypeDefinition'
 //!ns: end changes
 };
